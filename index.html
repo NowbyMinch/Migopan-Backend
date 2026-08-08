@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste da API de Grupos</title>
+</head>
+<body>
+  <h1>Gerenciador de Grupos</h1>
+
+  <!-- Formulário para Criar Novo Grupo -->
+  <form id="form-grupo" onsubmit="criarGrupo(event)" style="margin-bottom: 20px;">
+    <h3>Novo Grupo</h3>
+    <div>
+      <input type="text" id="nome" placeholder="Nome do Grupo" required style="margin-right: 8px;">
+      <input type="text" id="descricao" placeholder="Descrição (opcional)" style="margin-right: 8px;">
+      <button type="submit">Adicionar Grupo</button>
+    </div>
+  </form>
+
+  <hr>
+
+  <h2>Lista de Grupos</h2>
+  <button onclick="carregarGrupos()">Atualizar Lista</button>
+  <ul id="lista-grupos"></ul>
+
+  <script>
+    const API_URL = 'http://localhost:8080/api/groups';
+
+    async function carregarGrupos() {
+      const listaEl = document.getElementById('lista-grupos');
+      listaEl.innerHTML = 'Carregando...';
+
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        listaEl.innerHTML = '';
+
+        if (!Array.isArray(data)) {
+          listaEl.innerHTML = `<li><em>${data.message || data.messsage}</em></li>`;
+          return;
+        }
+
+        data.forEach(grupo => {
+          const li = document.createElement('li');
+          li.style.marginBottom = '8px';
+          li.innerHTML = `
+            <strong>[ID ${grupo.id}] ${grupo.nome}</strong>: ${grupo.descricao || 'Sem descrição'}
+            <button onclick="deletarGrupo(${grupo.id})" style="margin-left: 10px;">Deletar</button>
+          `;
+          listaEl.appendChild(li);
+        });
+      } catch (err) {
+        listaEl.innerHTML = '<li style="color:red">Erro ao conectar com a API.</li>';
+      }
+    }
+
+    async function criarGrupo(event) {
+      event.preventDefault();
+
+      const nomeInput = document.getElementById('nome');
+      const descricaoInput = document.getElementById('descricao');
+
+      const novoGrupo = {
+        nome: nomeInput.value,
+        descricao: descricaoInput.value
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(novoGrupo)
+        });
+
+        if (res.ok) {
+          // Limpa os campos do formulário
+          nomeInput.value = '';
+          descricaoInput.value = '';
+          // Atualiza a lista na tela
+          carregarGrupos();
+        } else {
+          alert('Erro ao criar o grupo. Verifique os campos.');
+        }
+      } catch (err) {
+        alert('Erro ao conectar com o servidor.');
+      }
+    }
+
+    async function deletarGrupo(id) {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      carregarGrupos();
+    }
+
+    carregarGrupos();
+  </script>
+</body>
+</html>
