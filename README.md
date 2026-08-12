@@ -41,7 +41,7 @@ O projeto foi planejado utilizando tecnologias modernas para escalabilidade e pe
 | :--- | :--- | :--- |
 | **Frontend** | HTML5 / CSS3 / JavaScript | Estrutura semântica e estilização responsiva com suporte a Bootstrap. |
 | **Mobile** | PWA (Progressive Web App) | Conversão da experiência web nativa para funcionamento mobile offline. |
-| **Backend** | Java (Spring Boot) / Node.js | API RESTful responsável pelo gerenciamento de regras de negócio. |
+| **Backend** | Java (Spring Boot) | API RESTful responsável pelo gerenciamento de regras de negócio. |
 | **Banco de Dados** | PostgreSQL | Armazenamento relacional e consistente dos dados de usuários e tarefas. |
 | **Design** | Figma | Prototipação de interface (UI) e experiência do usuário (UX). |
 
