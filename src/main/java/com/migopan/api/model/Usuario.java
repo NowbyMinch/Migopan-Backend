@@ -27,17 +27,17 @@ public class Usuario{
     @Column(nullable = false, length = 100)
     private String nome;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(nullable = false, name = "email_verificado")
     private Boolean emailVerificado;
 
-    @Column(nullable = false, length = 255)
-    private String senha_hash;
+    @Column(nullable = false, name = "senha_hash")
+    private String senhaHash;
 
     @Column(nullable = false)
-    private Integer streak;
+    private Integer streak = 0;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal dinheiro = BigDecimal.ZERO;
