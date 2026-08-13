@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     // Só será acionado quando o Spring lançar uma exceção do tipo MethodArgumentNotValidException. 
     // Ocorre automaticmaente quando os dados que chegamo no DTO não passam na validação do Bean Validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationException(MethdodArgumentNotValidException ex, HttpServletRequest request){
+    public ResponseEntity<ApiErrorResponse> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request){
         List<ApiFieldError> fieldErrors = ex.getBindingResult().getFieldErrors()
             .stream().map(error -> new ApiFieldError(error.getField(), error.getDefaultMessage())).toList();
         
