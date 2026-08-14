@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.UsuarioRepository;
 import com.migopan.api.dto.UsuarioRequestDTO;
+import com.migopan.api.dto.UsuarioResponseDTO;
 
 import jakarta.validation.Valid;
 
@@ -24,9 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-
-
-
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -43,18 +41,23 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
         }
 
-        return ResponseEntity.ok(usuarios);
+        List<UsuarioResponseDTO> usuariosResponse = usuarios.stream()
+            .map(UsuarioResponseDTO::new)
+            .toList();
+
+        return ResponseEntity.ok(usuariosResponse);
     };
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getUser(@PathVariable Long id) {
-        Optional<Usuario> usuarios = UsuarioRepository.findById(id);
+        Optional<Usuario> usuario = UsuarioRepository.findById(id);
         
-        if (usuarios.isEmpty()) {
+        if (usuario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
         }
 
-        return ResponseEntity.ok(usuarios);
+        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuario.get());
+        return ResponseEntity.ok(usuarioResponse);
     };
     
     @PostMapping
@@ -66,9 +69,9 @@ public class UsuarioController {
         novoUsuario.setSenhaHash(dto.senha());
         novoUsuario.setEmailVerificado(false);
         
-        UsuarioRepository.save(novoUsuario);
+        UsuarioResponseDTO usuarioSalvo = new UsuarioResponseDTO(UsuarioRepository.save(novoUsuario));
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Usuário criado com sucesso"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Usuário criado com sucesso: " + usuarioSalvo));
     }
 
     @PutMapping("/{id}")
