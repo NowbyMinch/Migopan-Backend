@@ -34,7 +34,7 @@ public class GroupController {
     public ResponseEntity<?> getAll() {
         List<Group> groups = groupRepository.findAll();
         if (groups.isEmpty()) {
-            return ResponseEntity.ok(Map.of("messsage", "Nenhum grupo cadastrado no momento."));
+            return ResponseEntity.ok(Map.of("message", "Nenhum grupo cadastrado no momento."));
         }
         
         return ResponseEntity.ok(groups);
