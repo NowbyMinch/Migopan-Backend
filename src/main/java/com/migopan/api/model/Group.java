@@ -27,3 +27,4 @@ public class Group {
     private LocalDateTime dataCriacao = LocalDateTime.now();
 
 }
+
