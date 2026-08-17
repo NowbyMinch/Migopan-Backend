@@ -7,37 +7,38 @@
 -- -- ---------------------------------------------------------------------
 -- -- USUARIO
 -- -- ---------------------------------------------------------------------
--- CREATE TABLE usuario ( 
---     id BIGSERIAL PRIMARY KEY,
---     nome VARCHAR(100) NOT NULL,
---     email VARCHAR(255) NOT NULL UNIQUE, 
---     email_verificado BOOLEAN NOT NULL DEFAULT FALSE,
---     senha_hash VARCHAR(255) NOT NULL,
---     streak INTEGER NOT NULL DEFAULT 0,
---     dinheiro numeric(12,2) NOT NULL DEFAULT 0,
---     data_criacao TIMESTAMP NOT NULL DEFAULT now(),
---     ativo BOOLEAN NOT NULL DEFAULT true
+-- CREATE TABLE usuario (
+--     id              BIGSERIAL PRIMARY KEY,
+--     nome            VARCHAR(100) NOT NULL,
+--     email           VARCHAR(255) NOT NULL UNIQUE,
+--     email_verificado BOOLEAN NOT NULL DEFAULT false,
+--     senha_hash      VARCHAR(255) NOT NULL,
+--     streak          INTEGER NOT NULL DEFAULT 0,
+--     dinheiro        NUMERIC(12,2) NOT NULL DEFAULT 0,
+--     data_criacao    TIMESTAMP NOT NULL DEFAULT now(),
+--     ativo           BOOLEAN NOT NULL DEFAULT true
 -- );
 
 -- -- ---------------------------------------------------------------------
 -- -- GRUPO
 -- -- ---------------------------------------------------------------------
 -- CREATE TABLE grupo (
---     id BIGSERIAL PRIMARY KEY,
---     nome VARCHAR(100) NOT NULL, 
---     descricao TEXT,
---     ativo BOOLEAN NOT NULL DEFAULT true,
---     data_criacao TIMESTAMP NOT NULL DEFAULT now()
+--     id              BIGSERIAL PRIMARY KEY,
+--     nome            VARCHAR(100) NOT NULL,
+--     descricao       TEXT,
+--     ativo           BOOLEAN NOT NULL DEFAULT true,
+--     data_criacao    TIMESTAMP NOT NULL DEFAULT now()
 -- );
-
 
 -- -- Relacionamento N:N Usuario <-> Grupo (era o diamante "Está")
 -- CREATE TABLE grupo_membro (
---     usuario_id BIGINT NOT NULL REFERENCES usuario(id)ON DELETE CASCADE,
---     grupo_id BIGINT NOT NULL REFERENCES grupo(id) ON DELETE CASCADE,
---     data_entrada TIMESTAMP NOT NULL DEFAULT now(),
---     bloqueado BOOLEAN NOT NULL DEFAULT false,
---     PRIMARY KEY (usuario_id, grupo_id)
+--     usuario_id      BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+--     grupo_id        BIGINT NOT NULL REFERENCES grupo(id) ON DELETE CASCADE,
+--     papel           VARCHAR(20) NOT NULL DEFAULT 'MEMBRO', -- ADMIN, MEMBRO
+--     data_entrada    TIMESTAMP NOT NULL DEFAULT now(),
+--     bloqueado       BOOLEAN NOT NULL DEFAULT false,
+--     PRIMARY KEY (usuario_id, grupo_id),
+--     CONSTRAINT chk_papel_valido CHECK (papel IN ('ADMIN', 'MEMBRO'))
 -- );
 
 -- CREATE INDEX idx_grupo_membro_grupo ON grupo_membro(grupo_id);
@@ -46,14 +47,12 @@
 -- -- ACESSORIO
 -- -- ---------------------------------------------------------------------
 -- CREATE TABLE acessorio (
---     id BIGSERIAL NOT NULL PRIMARY KEY,
---     codigo VARCHAR(50) NOT NULL UNIQUE, -- código interno do acessório, usado para identificar o item no sistema. Ex: "chapeu_pirata"
---     tipo VARCHAR(50) NOT NULL, -- CABECA, ROSTO, PEITO, MAO
---     nome VARCHAR(100) NOT NULL,
---     custo NUMERIC (12,2) NOT NULL DEFAULT 0 
+--     id              BIGSERIAL PRIMARY KEY,
+--     tipo            VARCHAR(50) NOT NULL, -- CABECA, ROSTO, PEITO, MAO
+--     nome            VARCHAR(100) NOT NULL,
+--     custo           NUMERIC(12,2) NOT NULL DEFAULT 0
 -- );
 
-    
 -- -- Relacionamento N:N Usuario <-> Acessorio (inventário — era o diamante "Possui")
 -- CREATE TABLE inventario_usuario (
 --     usuario_id      BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
@@ -66,20 +65,13 @@
 -- -- LISTA_AMIGOS (auto-relacionamento N:N em Usuario)
 -- -- ---------------------------------------------------------------------
 -- CREATE TABLE lista_amigos (
---     usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
---     amigo_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
---     data_aceitecao TIMESTAMP NOT NULL DEFAULT now(),
---     PRIMARY KEY (usuario_id, amigo_id)
+--     usuario_id      BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+--     amigo_id        BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+--     status_amizade  VARCHAR(20) NOT NULL DEFAULT 'PENDENTE', -- PENDENTE, ACEITA, RECUSADA
+--     data_amizade    TIMESTAMP NOT NULL DEFAULT now(),
+--     PRIMARY KEY (usuario_id, amigo_id),
+--     CONSTRAINT chk_nao_amigo_de_si CHECK (usuario_id <> amigo_id)
 -- );
-
--- -- CREATE TABLE lista_amigos (
--- --     usuario_id      BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
--- --     amigo_id        BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
--- --     status_amizade  VARCHAR(20) NOT NULL DEFAULT 'PENDENTE', -- PENDENTE, ACEITA, RECUSADA
--- --     data_amizade    TIMESTAMP NOT NULL DEFAULT now(),
--- --     PRIMARY KEY (usuario_id, amigo_id),
--- --     CONSTRAINT chk_nao_amigo_de_si CHECK (usuario_id <> amigo_id)
--- -- );
 
 -- CREATE INDEX idx_lista_amigos_amigo ON lista_amigos(amigo_id);
 
@@ -144,44 +136,3 @@
 -- );
 
 -- CREATE INDEX idx_migo_usuario ON migo(usuario_id);
-
-
-
--- package com.seuapp.model;
-
--- import com.seuapp.model.keys.GrupoMembroId;
--- import jakarta.persistence.*;
--- import lombok.AllArgsConstructor;
--- import lombok.Getter;
--- import lombok.NoArgsConstructor;
--- import lombok.Setter;
-
--- import java.time.LocalDateTime;
-
--- @Entity
--- @Table(name = "grupo_membro")
--- @Getter
--- @Setter
--- @NoArgsConstructor
--- @AllArgsConstructor
--- public class GrupoMembro {
-
---     @EmbeddedId
---     private GrupoMembroId id = new GrupoMembroId();
-
---     @ManyToOne(fetch = FetchType.LAZY)
---     @MapsId("usuario")
---     @JoinColumn(name = "usuario_id")
---     private Usuario usuario;
-
---     @ManyToOne(fetch = FetchType.LAZY)
---     @MapsId("grupo")
---     @JoinColumn(name = "grupo_id")
---     private Grupo grupo;
-
---     @Column(name = "data_entrada", nullable = false)
---     private LocalDateTime dataEntrada = LocalDateTime.now();
-
---     @Column(nullable = false)
---     private Boolean bloqueado = false;
--- }

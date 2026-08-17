@@ -1,4 +1,4 @@
-package com.seuapp.model.keys;
+package com.migopan.api.model.keys;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

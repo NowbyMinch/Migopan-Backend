@@ -1,6 +1,7 @@
 package com.migopan.api.dto;
 
 import com.migopan.api.model.Usuario;
+import java.math.BigDecimal;
 
 public record UsuarioResponseDTO( 
     Long id, 
@@ -9,7 +10,7 @@ public record UsuarioResponseDTO(
     Boolean emailVerificado,
     Boolean ativo,
     Integer streak,
-    Double dinheiro 
+    BigDecimal dinheiro 
 ) {
     public UsuarioResponseDTO(Usuario usuario) {
         this(
@@ -20,6 +21,6 @@ public record UsuarioResponseDTO(
             usuario.getAtivo(), 
             usuario.getStreak(), 
             usuario.getDinheiro()
-        )
+        );
     }
 }

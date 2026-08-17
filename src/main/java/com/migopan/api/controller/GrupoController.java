@@ -41,6 +41,9 @@ public class GrupoController {
         grupo.setDescricao(dto.descricao());
 
         Grupo saved = grupoRepository.save(grupo);
+
+        // GrupoMembro membro = new GrupoMembro();
+        // membro.setUsuario()
         return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved));
     }
 
