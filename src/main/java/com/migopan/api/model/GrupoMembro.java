@@ -1,6 +1,6 @@
 
 @Entity
-@Table(name = "grupo_member")
+@Table(name = "grupo_membro")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class GrupoMembro {
