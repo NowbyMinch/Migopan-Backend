@@ -9,15 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.migopan.api.dto.GroupRequestDTO;
+import com.migopan.api.dto.GroupResponseDTO;
 import com.migopan.api.model.Group;
 import com.migopan.api.repository.GroupRepository;
 
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -31,18 +27,21 @@ public class GroupController {
     public ResponseEntity<?> getAll() {
         List<Group> groups = groupRepository.findAll();
         if (groups.isEmpty()) {
-            return ResponseEntity.ok(Map.of("messsage", "Nenhum grupo cadastrado no momento."));
+            return ResponseEntity.ok(Map.of("message", "Nenhum grupo cadastrado no momento."));
         }
         
-        return ResponseEntity.ok(groups);
+        List<GroupResponseDTO> response = groups.stream().map(GroupResponseDTO::new).toList();  
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<Group> create(@RequestBody @Valid GroupRequestDTO dto) {
+    public ResponseEntity<GroupResponseDTO> create(@RequestBody @Valid GroupRequestDTO dto) {
         Group group = new Group();
         group.setNome(dto.nome());
         group.setDescricao(dto.descricao());
-        return ResponseEntity.status(HttpStatus.CREATED).body(groupRepository.save(group));
+
+        Group saved = groupRepository.save(group);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new GroupResponseDTO(saved));
     }
 
     @DeleteMapping("/{id}")

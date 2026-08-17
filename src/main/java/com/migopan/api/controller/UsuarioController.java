@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.UsuarioRepository;
 import com.migopan.api.dto.UsuarioRequestDTO;
+import com.migopan.api.dto.UsuarioResponseDTO;
 
 import jakarta.validation.Valid;
 
@@ -25,37 +26,39 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
-
-
-
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
 public class UsuarioController {
     @Autowired
-    private UsuarioRepository UsuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping
     public ResponseEntity<?> getAll() {
-        List<Usuario> usuarios = UsuarioRepository.findAll();
+        List<Usuario> usuarios = usuarioRepository.findAll();
         
         if (usuarios.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
         }
 
-        return ResponseEntity.ok(usuarios);
-    };
+        List<UsuarioResponseDTO> usuariosResponse = usuarios.stream()
+            .map(UsuarioResponseDTO::new)
+            .toList();
+
+        return ResponseEntity.ok(usuariosResponse);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getUser(@PathVariable Long id) {
-        Optional<Usuario> usuarios = UsuarioRepository.findById(id);
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
         
-        if (usuarios.isEmpty()) {
+        if (usuario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
         }
 
-        return ResponseEntity.ok(usuarios);
-    };
+        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuario.get());
+        return ResponseEntity.ok(usuarioResponse);
+    }
     
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Valid UsuarioRequestDTO dto) {
@@ -66,14 +69,15 @@ public class UsuarioController {
         novoUsuario.setSenhaHash(dto.senha());
         novoUsuario.setEmailVerificado(false);
         
-        UsuarioRepository.save(novoUsuario);
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuarioSalvo);
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Usuário criado com sucesso"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioResponse);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid UsuarioRequestDTO dto) {
-        Optional<Usuario> usuario = UsuarioRepository.findById(id);
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
 
         if (usuario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Usuário não encontrado"));
@@ -84,21 +88,23 @@ public class UsuarioController {
         usuarioAtualizado.setEmail(dto.email());
         usuarioAtualizado.setSenhaHash(dto.senha());
 
-        UsuarioRepository.save(usuarioAtualizado);
-        return ResponseEntity.ok("Usuário atualizado com sucesso" + usuarioAtualizado);
+        Usuario usuarioSalvo = usuarioRepository.save(usuarioAtualizado);
+        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuarioSalvo);
+
+        return ResponseEntity.ok(usuarioResponse);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
-        Optional<Usuario> usuario = UsuarioRepository.findById(id);
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
         
         if (usuario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
         }
 
-        UsuarioRepository.deleteById(id);
+        usuarioRepository.deleteById(id);
 
-        return ResponseEntity.ok(Map.of("message", "usuário deletado com sucesso"));
-    };
+        return ResponseEntity.ok(Map.of("message", "Usuário deletado com sucesso"));
+    }
     
 }
