@@ -5,10 +5,10 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tb_groups")
+@Table(name = "grupo")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class Group {
+public class Grupo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
