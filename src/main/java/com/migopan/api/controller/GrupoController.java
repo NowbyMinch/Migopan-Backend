@@ -2,6 +2,7 @@ package com.migopan.api.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import com.migopan.api.dto.GrupoRequestDTO;
 import com.migopan.api.dto.GrupoResponseDTO;
 import com.migopan.api.model.Grupo;
+import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.GrupoRepository;
+import com.migopan.api.service.GrupoService;
 
 import jakarta.validation.Valid;
 
@@ -21,11 +24,11 @@ import jakarta.validation.Valid;
 public class GrupoController {
 
     @Autowired
-    private GrupoRepository grupoRepository;
+    private GrupoService grupoService;
 
     @GetMapping
     public ResponseEntity<?> getAll() {
-        List<Grupo> grupos = grupoRepository.findAll();
+        List<Grupo> grupos = grupoService.listarTodos();
         if (grupos.isEmpty()) {
             return ResponseEntity.ok(Map.of("message", "Nenhum grupo cadastrado no momento."));
         }
@@ -34,45 +37,49 @@ public class GrupoController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getGrupo(@PathVariable Long id) {
+        Optional<Grupo> grupo = grupoService.GrupoPorId(id);
+        if (grupo.isEmpty()) {
+            return ResponseEntity.ok(Map.of("message", "Nenhum grupo cadastrado no momento."));
+        }
+        
+        GrupoResponseDTO response = new GrupoResponseDTO(grupo.get());  
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
-    public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto) {
-        Grupo grupo = new Grupo();
-        grupo.setNome(dto.nome());
-        grupo.setDescricao(dto.descricao());
+    public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto, Usuario usuario) {
+        
+        Grupo saved = grupoService.criarGrupo(dto, usuario);
 
-        Grupo saved = grupoRepository.save(grupo);
-
-        // GrupoMembro membro = new GrupoMembro();
-        // membro.setUsuario()
         return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
-        if (!grupoRepository.existsById(id)) {
+        boolean deletado = grupoService.deletar(id);
+
+        if (!deletado) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Grupo não encontrado com o ID: " + id));
         }
 
-        grupoRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Grupo com ID: " + id + " deletado com sucesso."));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid GrupoRequestDTO dto) {
-        var optionalGrupo = grupoRepository.findById(id);
 
-        if (optionalGrupo.isEmpty()) {
+        Optional<Grupo> saved = grupoService.atualizar(id, dto);
+
+        if (saved.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Grupo não encontrado com o ID: " + id));
         }
 
-        Grupo grupo = optionalGrupo.get();
-        grupo.setNome(dto.nome());
-        grupo.setDescricao(dto.descricao());
-        Grupo updatedGrupo = grupoRepository.save(grupo);
-        
-        return ResponseEntity.ok(Map.of("message","Grupo atualizado com sucesso: " + updatedGrupo));
+
+        return ResponseEntity.ok(Map.of("message","Grupo atualizado com sucesso: "));
     }
 
 }
