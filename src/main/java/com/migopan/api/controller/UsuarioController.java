@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +33,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class UsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     public ResponseEntity<?> getAll() {
@@ -66,7 +70,10 @@ public class UsuarioController {
         Usuario novoUsuario = new Usuario();
         novoUsuario.setNome(dto.nome());
         novoUsuario.setEmail(dto.email());
-        novoUsuario.setSenhaHash(dto.senha());
+        
+        String senhaHash = passwordEncoder.encode(dto.senha());
+        novoUsuario.setSenhaHash(senhaHash);
+
         novoUsuario.setEmailVerificado(false);
         
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
