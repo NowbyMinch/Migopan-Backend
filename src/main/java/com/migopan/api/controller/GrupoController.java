@@ -50,7 +50,6 @@ public class GrupoController {
 
     @PostMapping
     public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto, Usuario usuario) {
-        
         Grupo saved = grupoService.criarGrupo(dto, usuario);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved));
@@ -70,14 +69,12 @@ public class GrupoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid GrupoRequestDTO dto) {
-
         Optional<Grupo> saved = grupoService.atualizar(id, dto);
 
         if (saved.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Grupo não encontrado com o ID: " + id));
         }
-
 
         return ResponseEntity.ok(Map.of("message","Grupo atualizado com sucesso: "));
     }
