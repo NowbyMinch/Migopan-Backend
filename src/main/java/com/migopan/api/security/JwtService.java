@@ -40,16 +40,6 @@ public class JwtService {
 
     public boolean validarToken(String token) {
         try {
-            Jwts.paser().verifyWith(getSigninKey()).build().parseSignedClaims(token);
-            return true;
-        }
-        catch (Exception e) {
-            return false;
-        }
-    }
-
-    public boolean validarToken(String token) {
-        try {
             Jwts.parser().verifyWith(getSigninKey()).build().parseSignedClaims(token);
             return true;
         }
