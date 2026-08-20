@@ -17,7 +17,6 @@ import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.UsuarioRepository;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    // .... Continuar
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
 
@@ -48,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
-            
+        
         filterChain.doFilter(request, response);
     }
 

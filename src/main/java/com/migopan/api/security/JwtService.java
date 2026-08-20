@@ -13,7 +13,7 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
-    private final String SECRET_KEY = "asdsa";
+    private final String SECRET_KEY = "asdsa"; // Não se esquecer de mudar a SECRET_KEY
     private final long EXPIRATION_TIME = 86400000;
 
     private SecretKey getSigninKey() {

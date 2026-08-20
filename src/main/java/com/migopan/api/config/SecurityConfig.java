@@ -18,6 +18,20 @@ public class SecurityConfig {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // @Bean
-    // public 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) Throws Exception {
+        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtService, usuarioRepository);
+
+        http 
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(sessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/usuarios", "/api/auth/login").permitAll()
+                .anyRequest().authenticated() // Exige estar logado
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationToken.class);
+
+        return http.build();
+    } 
+
 }
