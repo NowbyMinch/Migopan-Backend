@@ -28,6 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
+
+        // pegar o token do cookie 
         String token = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
@@ -37,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+        // pegar o usuário do token 
         if (token != null && jwtService.validarToken(token)) {
             String email = jwtService.extrairEmail(token);
             Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
