@@ -93,7 +93,7 @@ public class UsuarioController {
         Usuario usuarioAtualizado = usuario.get();
         usuarioAtualizado.setNome(dto.nome());
         usuarioAtualizado.setEmail(dto.email());
-        usuarioAtualizado.setSenhaHash(dto.senha());
+        usuarioAtualizado.setSenhaHash(passwordEncoder.encode(dto.senha()));
 
         Usuario usuarioSalvo = usuarioRepository.save(usuarioAtualizado);
         UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuarioSalvo);

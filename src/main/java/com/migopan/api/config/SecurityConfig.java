@@ -2,9 +2,14 @@ package com.migopan.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.migopan.api.repository.UsuarioRepository;
+import com.migopan.api.security.JwtAuthenticationFilter;
 import com.migopan.api.security.JwtService;
 
 @Configuration
@@ -25,13 +30,13 @@ public class SecurityConfig {
         http 
             .csrf(csrf -> csrf.disable())
             // criar uma regra de sessão
-            .sessionManagement(session -> session.sessionCreationPolicy(sessionCreationPolicy.STATELESS))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Controle das autorizações
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/usuarios", "/api/auth/login").permitAll() // Público
                 .anyRequest().authenticated() // Exige estar logado
             )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationToken.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     } 

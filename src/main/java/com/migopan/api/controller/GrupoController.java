@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 
 import com.migopan.api.dto.GrupoRequestDTO;
 import com.migopan.api.dto.GrupoResponseDTO;
@@ -15,6 +16,7 @@ import com.migopan.api.model.Grupo;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.service.GrupoService;
+
 
 import jakarta.validation.Valid;
 
