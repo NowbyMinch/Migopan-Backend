@@ -29,15 +29,21 @@ public class AuthController {
         String senha = credentials.get("senha");
 
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-        if (usuario == null || passwordEncoder.matches(senha, usuario.getSenhaHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"))
+        // if (usuario == null || passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+        //     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"));
+        // }
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Usuário inexistente"));
+        }
+        else if (passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Senha incorreta"));
         }
 
         String token = jwtService.gerarToken(usuario.getEmail());
 
         Cookie cookie = new Cookie("token", token);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true); // Defina com true se usar HTTPS em produção 
+        cookie.setSecure(false); // Defina com true se usar HTTPS em produção 
         cookie.setPath("/");
         cookie.setMaxAge(86400); // 1 dia 
         response.addCookie(cookie);

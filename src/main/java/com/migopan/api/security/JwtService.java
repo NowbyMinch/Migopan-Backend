@@ -28,7 +28,7 @@ public class JwtService {
                 .signWith(getSigninKey())
                 .compact();
     };
-
+    
     public String extrairEmail(String token) {
         Claims claims = Jwts.parser()
             .verifyWith(getSigninKey()) // Verifica se é do sistema
