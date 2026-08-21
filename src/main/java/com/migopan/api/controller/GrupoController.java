@@ -49,8 +49,8 @@ public class GrupoController {
     }
 
     @PostMapping
-    public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto, Usuario usuario) {
-        Grupo saved = grupoService.criarGrupo(dto, usuario);
+    public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto, @AuthenticationPrincipal Usuario usuarioLogado) {
+        Grupo saved = grupoService.criarGrupo(dto, usuarioLogado);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved));
     }
