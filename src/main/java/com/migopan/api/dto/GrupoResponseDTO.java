@@ -8,10 +8,9 @@ public record GrupoResponseDTO(
     Long id,
     String nome,
     String descricao,
-    Boolean ativo, 
-    LocalDateTime dataCriacao
+    Long quantidadeMembros
 ) {
     public GrupoResponseDTO(Grupo grupo) {
-        this(grupo.getId(), grupo.getNome(), grupo.getDescricao(), grupo.getAtivo(), grupo.getDataCriacao());
+        this(grupo.getId(), grupo.getNome(), grupo.getDescricao(), quantidadeMembros);
     }
 }

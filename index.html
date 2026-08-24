@@ -77,162 +77,169 @@
     <ul id="lista-usuarios"></ul>
 
     <script>
-      const API_URL = "http://localhost:8080/api/grupo";
+  const API_URL = "http://localhost:8080/api/grupos"; // Corrigido de /api/grupo para /api/grupos
 
-      async function carregarGrupos() {
-        const listaEl = document.getElementById("lista-grupos");
-        listaEl.innerHTML = "Carregando...";
+  async function carregarGrupos() {
+    const listaEl = document.getElementById("lista-grupos");
+    listaEl.innerHTML = "Carregando...";
 
-        try {
-          const res = await fetch(API_URL);
-          const data = await res.json();
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
 
-          listaEl.innerHTML = "";
+      listaEl.innerHTML = "";
 
-          if (!Array.isArray(data)) {
-            listaEl.innerHTML = `<li><em>${data.message || data.message}</em></li>`;
-            return;
-          }
-
-          data.forEach((grupo) => {
-            const li = document.createElement("li");
-            li.style.marginBottom = "8px";
-            li.innerHTML = `
-            <strong>[ID ${grupo.id}] ${grupo.nome}</strong>: ${grupo.descricao || "Sem descrição"}
-            <button onclick="deletarGrupo(${grupo.id})" style="margin-left: 10px;">Deletar</button>
-          `;
-            listaEl.appendChild(li);
-          });
-        } catch (err) {
-          listaEl.innerHTML =
-            '<li style="color:red">Erro ao conectar com a API.</li>';
-        }
+      if (!Array.isArray(data)) {
+        listaEl.innerHTML = `<li><em>${data.message || "Aviso"}</em></li>`;
+        return;
       }
 
-      async function criarGrupo(event) {
-        event.preventDefault();
+      data.forEach((grupo) => {
+        const li = document.createElement("li");
+        li.style.marginBottom = "8px";
+        li.innerHTML = `
+        <strong>[ID ${grupo.id}] ${grupo.nome}</strong>: ${grupo.descricao || "Sem descrição"} (Membros: ${grupo.quantidadeMembros || 0})
+        <button onclick="deletarGrupo(${grupo.id})" style="margin-left: 10px;">Deletar</button>
+        `;
+        listaEl.appendChild(li);
+      });
+    } catch (err) {
+      listaEl.innerHTML = '<li style="color:red">Erro ao conectar com a API.</li>';
+    }
+  }
 
-        const nomeInput = document.getElementById("nome");
-        const descricaoInput = document.getElementById("descricao");
+  async function criarGrupo(event) {
+    event.preventDefault();
 
-        const novoGrupo = {
-          nome: nomeInput.value,
-          descricao: descricaoInput.value,
-        };
+    const nomeInput = document.getElementById("nome");
+    const descricaoInput = document.getElementById("descricao");
 
-        try {
-          const res = await fetch(API_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(novoGrupo),
-          });
+    const novoGrupo = {
+      nome: nomeInput.value,
+      descricao: descricaoInput.value,
+    };
 
-          if (res.ok) {
-            // Limpa os campos do formulário
-            nomeInput.value = "";
-            descricaoInput.value = "";
-            // Atualiza a lista na tela
-            carregarGrupos();
-          } else {
-            alert("Erro ao criar o grupo. Verifique os campos.");
-          }
-        } catch (err) {
-          alert("Erro ao conectar com o servidor.");
-        }
-      }
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(novoGrupo),
+      });
+      const data = await res.json();
 
-      async function deletarGrupo(id) {
-        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        nomeInput.value = "";
+        descricaoInput.value = "";
         carregarGrupos();
-      }
-
-      // Usuário ---------------------------------------------------------------------------------------------------------
-
-      async function carregarUsuarios() {
-        const listaEl = document.getElementById("lista-usuarios");
-        listaEl.innerHTML = "Carregando...";
-
-        try {
-          const res = await fetch("http://localhost:8080/api/usuarios");
-          const data = await res.json();
-
-          listaEl.innerHTML = "";
-
-          if (!Array.isArray(data)) {
-            listaEl.innerHTML = `<li><em>${data.message || data.message}</em></li> <div>${data}</div>`;
-            return;
-          }
-
-          data.forEach((usuario) => {
-            const li = document.createElement("li");
-            li.style.marginBottom = "8px";
-            li.innerHTML = `
-            <strong>[ID ${usuario.id}] ${usuario.nome}</strong>: ${usuario.email}
-            <button onclick="deletarUsuario(${usuario.id})" style="margin-left: 10px;">Deletar</button>
-          `;
-            listaEl.appendChild(li);
-          });
-        } catch (err) {
-          listaEl.innerHTML =
-            '<li style="color:red">Erro ao conectar com a API.</li>';
+      } else {
+        // Padronizado para exibir os erros do GlobalExceptionHandler igual aos usuários
+        if (data && data.fieldErrors && Array.isArray(data.fieldErrors)) {
+          const mensagensErros = data.fieldErrors
+            .map((erro) => `- ${erro.field}: ${erro.message}`)
+            .join("\n");
+          alert(mensagensErros);
+        } else if (data && data.message) {
+          alert(data.message);
+        } else {
+          alert("Erro ao criar o grupo.");
         }
       }
+    } catch (err) {
+      alert("Erro ao conectar com o servidor.");
+    }
+  }
 
-      async function criarUsuario(event) {
-        event.preventDefault();
+  async function deletarGrupo(id) {
+    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    carregarGrupos();
+  }
 
-        const nomeUserInput = document.getElementById("nomeUser");
-        const emailInput = document.getElementById("email");
-        const senhaInput = document.getElementById("senha");
+  // Usuário ---------------------------------------------------------------------------------------------------------
 
-        const novoUser = {
-          nome: nomeUserInput.value,
-          email: emailInput.value,
-          senha: senhaInput.value,
-        };
+  async function carregarUsuarios() {
+    const listaEl = document.getElementById("lista-usuarios");
+    listaEl.innerHTML = "Carregando...";
 
-        try {
-          const res = await fetch("http://localhost:8080/api/usuarios", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(novoUser),
-          });
-          const data = await res.json();
+    try {
+      const res = await fetch("http://localhost:8080/api/usuarios");
+      const data = await res.json();
 
-          if (res.ok) {
-            // Limpa os campos do formulário
-            nomeUserInput.value = "";
-            emailInput.value = "";
-            senhaInput.value = "";
-            // Atualiza a lista na tela
-            carregarUsuarios();
-          } else {
-            if (data && data.fieldErrors && Array.isArray(data.fieldErrors)) {
-              const mensagensErros = data.fieldErrors
-                .map((erro) => `- ${erro.field}: ${erro.message}`)
-                .join("\n");
+      listaEl.innerHTML = "";
 
-              alert(mensagensErros);
-            }
-          }
-        } catch (err) {
-          alert("Erro ao conectar com o servidor.");
-        }
+      if (!Array.isArray(data)) {
+        listaEl.innerHTML = `<li><em>${data.message || "Aviso"}</em></li>`;
+        return;
       }
 
-      async function deletarUsuario(id) {
-        await fetch(`${"http://localhost:8080/api/usuarios"}/${id}`, {
-          method: "DELETE",
-        });
+      data.forEach((usuario) => {
+        const li = document.createElement("li");
+        li.style.marginBottom = "8px";
+        li.innerHTML = `
+        <strong>[ID ${usuario.id}] ${usuario.nome}</strong>: ${usuario.email}
+        <button onclick="deletarUsuario(${usuario.id})" style="margin-left: 10px;">Deletar</button>
+        `;
+        listaEl.appendChild(li);
+      });
+    } catch (err) {
+      listaEl.innerHTML = '<li style="color:red">Erro ao conectar com a API.</li>';
+    }
+  }
+
+  async function criarUsuario(event) {
+    event.preventDefault();
+
+    const nomeUserInput = document.getElementById("nomeUser");
+    const emailInput = document.getElementById("email");
+    const senhaInput = document.getElementById("senha");
+
+    const novoUser = {
+      nome: nomeUserInput.value,
+      email: emailInput.value,
+      senha: senhaInput.value,
+    };
+
+    try {
+      const res = await fetch("http://localhost:8080/api/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(novoUser),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        nomeUserInput.value = "";
+        emailInput.value = "";
+        senhaInput.value = "";
         carregarUsuarios();
-      }
+      } else {
+        if (data && data.fieldErrors && Array.isArray(data.fieldErrors)) {
+          const mensagensErros = data.fieldErrors
+            .map((erro) => `- ${erro.field}: ${erro.message}`)
+            .join("\n");
 
-      carregarGrupos();
-      carregarUsuarios();
-    </script>
+          alert(mensagensErros);
+        } else if (data && data.message) {
+          alert(data.message);
+        }
+      }
+    } catch (err) {
+      alert("Erro ao conectar com o servidor.");
+    }
+  }
+
+  async function deletarUsuario(id) {
+    await fetch(`http://localhost:8080/api/usuarios/${id}`, {
+      method: "DELETE",
+    });
+    carregarUsuarios();
+  }
+
+  carregarGrupos();
+  carregarUsuarios();
+</script>
   </body>
 </html>

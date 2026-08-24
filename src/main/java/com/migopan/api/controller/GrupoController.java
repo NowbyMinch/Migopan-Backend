@@ -30,31 +30,30 @@ public class GrupoController {
 
     @GetMapping
     public ResponseEntity<?> getAll() {
-        List<Grupo> grupos = grupoService.listarTodos();
-        if (grupos.isEmpty()) {
-            return ResponseEntity.ok(Map.of("message", "Nenhum grupo cadastrado no momento."));
-        }
+        List<GrupoResponseDTO> grupos = grupoService.listarTodos();
         
-        List<GrupoResponseDTO> response = grupos.stream().map(GrupoResponseDTO::new).toList();  
-        return ResponseEntity.ok(response);
+        if (grupos.isEmpty()) {
+            return ResponseEntity.ok(Map.of("message", "Nenhum grupo encontrado."));
+        }
+
+        return ResponseEntity.ok(grupos);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGrupo(@PathVariable Long id) {
-        Optional<Grupo> grupo = grupoService.GrupoPorId(id);
+        Optional<GrupoResponseDTO> grupo = grupoService.GrupoPorId(id);
         if (grupo.isEmpty()) {
-            return ResponseEntity.ok(Map.of("message", "Nenhum grupo cadastrado no momento."));
+            return ResponseEntity.ok(Map.of("message", "Grupo não encontrado."));
         }
         
-        GrupoResponseDTO response = new GrupoResponseDTO(grupo.get());  
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new GrupoResponseDTO(grupo.get()));
     }
 
     @PostMapping
     public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto, @AuthenticationPrincipal Usuario usuarioLogado) {
         Grupo saved = grupoService.criarGrupo(dto, usuarioLogado);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved, 1L));
     }
 
     @DeleteMapping("/{id}")

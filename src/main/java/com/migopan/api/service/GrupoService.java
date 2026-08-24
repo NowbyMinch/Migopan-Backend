@@ -24,7 +24,7 @@ public class GrupoService {
     @Autowired
     private GrupoMembroRepository grupoMembroRepository;
 
-    public List<Grupo> listarTodos() {
+    public List<GrupoResponseDTO> listarTodos() {
         return grupoRepository.findAll().stream()
                 .map(grupo -> { 
                     long qtd = grupoMembroRepository.countByGroupId(grupo.getId());
@@ -32,28 +32,36 @@ public class GrupoService {
                 }).toList();
     }
 
-    public Optional<Grupo> GrupoPorId(Long id) {
-        return grupoRepository.findById(id);
+    public Optional<GrupoResponseDTO> GrupoPorId(Long id) {
+        Optional<Grupo> grupo = grupoRepository.findById(id).map(grupo -> {
+            long qtd = grupoMembroRepository.countByGroupId(id);
+            return new GrupoResponseDTO(grupo, qtd);
+        });
+
+        return grupo;
     }
 
     @Transactional
     public Grupo criarGrupo(GrupoRequestDTO dto, Usuario criador) {
-        Grupo grupo = new Grupo();
-        grupo.setNome(dto.nome());
-        grupo.setDescricao(dto.descricao());
-        Grupo grupoSalvo = grupoRepository.save(grupo);
-
         if (criador != null) {
+            Grupo grupo = new Grupo();
+            grupo.setNome(dto.nome());
+            grupo.setDescricao(dto.descricao());
+            Grupo grupoSalvo = grupoRepository.save(grupo);
+
             GrupoMembro membro = new GrupoMembro();
             membro.setUsuario(criador);
             membro.setGrupo(grupoSalvo);
+            membro.setPapel("ADMIN");
             membro.setBloqueado(false);
             grupoMembroRepository.save(membro);
+
+            return grupoSalvo;
         }
 
-        return grupoSalvo;
+        throw new RuntimeException("Usuário não encontrado.");
     }
-
+    
     public boolean deletar(Long id) {
         if (!grupoRepository.existsById(id)) {
             return false;
