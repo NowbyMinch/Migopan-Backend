@@ -25,7 +25,11 @@ public class GrupoService {
     private GrupoMembroRepository grupoMembroRepository;
 
     public List<Grupo> listarTodos() {
-        return grupoRepository.findAll();
+        return grupoRepository.findAll().stream()
+                .map(grupo -> { 
+                    long qtd = grupoMembroRepository.countByGroupId(grupo.getId());
+                    return new GrupoResponseDTO(grupo, qtd);
+                }).toList();
     }
 
     public Optional<Grupo> GrupoPorId(Long id) {
