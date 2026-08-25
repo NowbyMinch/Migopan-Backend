@@ -8,3 +8,4 @@ CREATE TABLE grupo_membro (
 );
 
 CREATE INDEX idx_grupo_membro_grupo ON grupo_membro(grupo_id);
+CREATE INDEX idx_grupo_membro_usuario ON grupo_membro(usuario_id);

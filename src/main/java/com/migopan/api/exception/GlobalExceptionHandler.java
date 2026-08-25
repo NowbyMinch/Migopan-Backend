@@ -49,8 +49,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(RecursoNotFoundException.class) 
-    public ResponseEntity<ApiErrorResponse> handleRecursoNotFoundException(RecursoNotFoundException ex, HttpServletRequest request){
+    @ExceptionHandler(NotFoundException.class) 
+    public ResponseEntity<ApiErrorResponse> handleNotFoundException(NotFoundException ex, HttpServletRequest request){
         ApiErrorResponse response = new ApiErrorResponse(
             Instant.now(),
             HttpStatus.NOT_FOUND.value(),

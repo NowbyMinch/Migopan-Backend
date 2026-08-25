@@ -29,7 +29,7 @@ public class GrupoController {
     private GrupoService grupoService;
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getAllGrupos() {
         List<GrupoResponseDTO> grupos = grupoService.listarTodos();
         
         if (grupos.isEmpty()) {

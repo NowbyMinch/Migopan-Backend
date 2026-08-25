@@ -22,7 +22,78 @@ public class GrupoService {
     private GrupoRepository grupoRepository;
 
     @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
     private GrupoMembroRepository grupoMembroRepository;
+
+    public List<GrupoResponseDTO> getGruposDoUsuario(Long usuarioId){
+        if (!usuarioRepository.existsById(usuarioId)){
+            throw new NotFoundException("Usuário não encontrado.");
+        }
+
+        List<Grupo> grupos = grupoMembroRepository.findGruposByUsuarioId(usuarioId);
+        return grupos.stream().map(GrupoResponseDTO::new).toList();
+    }
+
+
+    @Transactional
+    public GrupoResponseDTO criarGrupo(GrupoRequestDTO dto, Long usuarioIdLogado) {
+        Usuario usuario = usuarioRepository.findById(usuarioIdLogado)
+                .orElseThrow(() -> new NotFoundException("Usuário criador não encontrado."));
+
+        Grupo grupo = new Grupo();
+        grupo.setNome(dto.nome());
+        grupo.setDescricao(dto.descricao());
+        Grupo grupoSalvo = grupoRepository.save(grupo);
+
+        GrupoMembro id = new GrupoMembroId(grupoSalvo.getId(), usuarioIdLogado);
+        GrupoMembro membro = new GrupoMembro();
+        membro.setId(id);
+        membro.setGrupo(grupoSalvo);
+        membro.setUsuario(usuario);
+        membro.setPapel("ADMIN");
+        membro.setBloqueado(false);
+
+        grupoMembroRepository.save(membro);
+
+        return new GrupoResponseDTO(grupoSalvo);
+    }
+
+    @Transactional
+    public GrupoResponseDTO atualizarGrupo(Long grupoId, Long usuarioIdLogado, GrupoRequestDTO dto){
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioIdLogado, "ADMIN")){
+            throw new RuntimeException("Apenas administradores podem editar o grupo.");
+        }
+
+        Grupo grupo = grupoRepository.findById(grupoId).orElseThrow(() -> new NotFoundException("Grupo não encontrado"));
+
+        if (dto.nome() != null && !dto.nome.isBlank()) {
+            grupo.setNome(dto.nome());
+        }
+        if (dto.descricao() != null) {
+            grupo.setDescricao(dto.descricao());
+        }
+    
+        Grupo salvo = grupoRepository.save(grupo);
+
+        return new GrupoResponseDTO(salvo);
+    }
+
+    @Transactional
+    public String deletarGrupo(Long grupoId, Long usuarioIdLogado) {
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioIdLogado, "ADMIN")){
+            throw new RuntimeException("Apenas administradores podem deletar o grupo.");
+        }
+    
+        if (!grupoRepository.existsById(grupoId)){
+            throw new NotFoundException("Grupo não encontrado.");
+        }
+
+        grupoRepository.deleteById(grupoId);
+
+        return "Grupo deletado com sucesso."
+    }
 
     public List<GrupoResponseDTO> listarTodos() {
         return grupoRepository.findAll().stream()
@@ -33,33 +104,10 @@ public class GrupoService {
     }
 
     public Optional<GrupoResponseDTO> GrupoPorId(Long id) {
-        Optional<Grupo> grupo = grupoRepository.findById(id).map(grupo -> {
+        return grupoRepository.findById(id).map(grupo -> {
             long qtd = grupoMembroRepository.countByGroupId(id);
-            return new GrupoResponseDTO(grupo, qtd);
-        });
-
-        return grupo;
-    }
-
-    @Transactional
-    public Grupo criarGrupo(GrupoRequestDTO dto, Usuario criador) {
-        if (criador != null) {
-            Grupo grupo = new Grupo();
-            grupo.setNome(dto.nome());
-            grupo.setDescricao(dto.descricao());
-            Grupo grupoSalvo = grupoRepository.save(grupo);
-
-            GrupoMembro membro = new GrupoMembro();
-            membro.setUsuario(criador);
-            membro.setGrupo(grupoSalvo);
-            membro.setPapel("ADMIN");
-            membro.setBloqueado(false);
-            grupoMembroRepository.save(membro);
-
-            return grupoSalvo;
-        }
-
-        throw new RuntimeException("Usuário não encontrado.");
+            return new GrupoResponseDTO(grupo, qtd)
+        })
     }
     
     public boolean deletar(Long id) {
@@ -71,12 +119,4 @@ public class GrupoService {
         return true;
     }
 
-    @Transactional
-    public Optional<Grupo> atualizar(Long id, GrupoRequestDTO dto) {
-        return grupoRepository.findById(id).map(grupo -> {
-            grupo.setNome(dto.nome());
-            grupo.setDescricao(dto.descricao());
-            return grupoRepository.save(grupo);
-        });
-    }
 }
