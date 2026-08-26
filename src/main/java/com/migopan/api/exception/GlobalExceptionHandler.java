@@ -11,13 +11,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-// Avisa ao Spring que essa classe é um manipulador global de exceções -> Ela fica ouvindo todos os controllers da aplicação, 
-// e quando uma exceção é lançada, ela é capturada por essa classe.
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Só será acionado quando o Spring lançar uma exceção do tipo MethodArgumentNotValidException. 
-    // Ocorre automaticmaente quando os dados que chegamo no DTO não passam na validação do Bean Validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request){
         List<ApiFieldError> fieldErrors = ex.getBindingResult().getFieldErrors()
@@ -61,5 +57,19 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+            Instant.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST.getReasonPhrase(),
+            ex.getMessage(),
+            request.getRequestURI(),
+            null
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }

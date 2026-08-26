@@ -134,7 +134,7 @@
         descricaoInput.value = "";
         carregarGrupos();
       } else {
-        // Padronizado para exibir os erros do GlobalExceptionHandler igual aos usuários
+        
         if (data && data.fieldErrors && Array.isArray(data.fieldErrors)) {
           const mensagensErros = data.fieldErrors
             .map((erro) => `- ${erro.field}: ${erro.message}`)
@@ -155,8 +155,6 @@
     await fetch(`${API_URL}/${id}`, { method: "DELETE" });
     carregarGrupos();
   }
-
-  // Usuário ---------------------------------------------------------------------------------------------------------
 
   async function carregarUsuarios() {
     const listaEl = document.getElementById("lista-usuarios");

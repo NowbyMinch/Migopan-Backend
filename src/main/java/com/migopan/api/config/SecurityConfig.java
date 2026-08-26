@@ -29,12 +29,10 @@ public class SecurityConfig {
 
         http 
             .csrf(csrf -> csrf.disable())
-            // criar uma regra de sessão
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // Controle das autorizações
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/usuarios", "/api/auth/login").permitAll() // Público
-                .anyRequest().authenticated() // Exige estar logado
+                .requestMatchers("/api/usuarios", "/api/auth/login").permitAll() 
+                .anyRequest().authenticated() 
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

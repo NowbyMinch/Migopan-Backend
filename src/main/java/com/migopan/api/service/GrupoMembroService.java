@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.migopan.api.exception.NotFoundException;
+import com.migopan.api.dto.AtualizarMembroRequestDTO;
 import com.migopan.api.dto.GrupoMembroRequestDTO;
 import com.migopan.api.dto.GrupoMembroResponseDTO;
 import com.migopan.api.model.Grupo;
@@ -29,14 +31,21 @@ public class GrupoMembroService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    public List<GrupoMembroResponseDTO> getMembrosPorGrupo(Long grupoId){
-        return grupoMembroRepository.findByGrupoId(grupoId).stream()
-                .map(GrupoMembroResponseDTO::new)
-                .toList();
+    public boolean verificarSeAdmin(Long grupoId, Long usuarioId) {
+        return grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioId, "ADMIN");
     }
 
-    public boolean verificarSeAdmin(Long grupoId, Long usuarioId) {
-        boolean grupoMembroRepository.ExistsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioId, "ADMIN");
+    public List<GrupoMembroResponseDTO> getMembrosPorGrupo(Long grupoId){
+        if (!grupoRepository.existsById(grupoId)){
+            throw new NotFoundException("Grupo não encontrado.");
+        }
+
+        long totalMembros = grupoMembroRepository.countByGroupId(grupoId);
+        List<GrupoMembro> membros = grupoMembroRepository.findByGrupoIdWithDetails(grupoId);
+        
+        return membros.stream()
+                .map(membro -> new GrupoMembroResponseDTO(membro, totalMembro))
+                .toList();  
     }
 
     @Transactional
@@ -47,11 +56,12 @@ public class GrupoMembroService {
 
         Grupo grupo = grupoRepository.findById(grupoId)
             .orElseThrow(() -> new RuntimeException("Grupo não encontrado."));
-        Usuario usuario = usuarioRepository.findById(requestDTO.getUsuarioId())
+
+        Usuario usuario = usuarioRepository.findById(dto.usuarioId())
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
         GrupoMembroId id = new GrupoMembroId(grupoId, dto.usuarioId());        
-        if (grupoMembroRepository.existsById(grupoMembroId)) {
+        if (grupoMembroRepository.existsById(id)) {
             throw new RuntimeException("Usuário já é membro do grupo.");
         }
 
@@ -64,14 +74,16 @@ public class GrupoMembroService {
             grupoMembro.setPapel(dto.papel());
         } 
 
-        membro.setBloqueado(false);
+        grupoMembro.setBloqueado(false);
 
         GrupoMembro salvo = grupoMembroRepository.save(grupoMembro);
-        return new GrupoMembroResponseDTO(salvo);
+        long totalMembros = grupoMembroRepository.countByGroupId(grupoId);
+
+        return new GrupoMembroResponseDTO(salvo, totalMembros);
     }
 
     @Transactional
-    public String removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {`
+    public String removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
             throw new RuntimeException("Apenas administradores podem remover membros.");
         }
@@ -82,28 +94,37 @@ public class GrupoMembroService {
         }
 
         grupoMembroRepository.deleteById(id);
-        return ResponseEntity.ok("Membro removido com sucesso.");
+        return "Membro removido com sucesso.";
     }
 
     @Transactional
-    public String atualizarPapel(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro, String novoPapel) {
+    public String atualizarMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro, AtualizarMembroRequestDTO dto) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
             throw new RuntimeException("Apenas administradores podem atualizar o papel dos membros.");
         }
 
-        GrupoMembro id = new GrupoMembroId(grupoId, usuarioIdMembro);
-        if (!grupoMembroRepository.existsById(id)) {
-            throw new RuntimeException("Usuário não é membro do grupo.");
+        boolean papelVazio = (dto.papel() == null || dto.papel().isBlank());
+        boolean bloqueadoVazio = (dto.bloqueado() == null);
+
+        if (papelVazio && bloqueadoVazio) {
+            throw new IllegalArgumentException("Nenhum dado foi fornecido para atualização.");
         }
 
-        GrupoMembro grupoMembro = grupoMembroRepository.findById(id)
+        GrupoMembroId id = new GrupoMembroId(grupoId, usuarioIdMembro);
+
+        GrupoMembro membro = grupoMembroRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não é membro do grupo."));
         
-        GrupoMembro membro = grupoMembro.get();
-        membro.setPapel(novoPapel);
+        if (!papelVazio) {
+            membro.setPapel(dto.papel());
+        }
+        if (!bloqueadoVazio) {
+            membro.setBloqueado(dto.bloqueado());
+        }
+
         grupoMembroRepository.save(membro);
 
-        return ResponseEntity.ok("Papel do membro atualizado com sucesso.");
+        return "Membro atualizado com sucesso.";
     }
 
 }

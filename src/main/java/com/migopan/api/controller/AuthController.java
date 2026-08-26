@@ -43,7 +43,7 @@ public class AuthController {
 
         Cookie cookie = new Cookie("token", token);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Defina com true se usar HTTPS em produção 
+        cookie.setSecure(false); 
         cookie.setPath("/");
         cookie.setMaxAge(86400); // 1 dia 
         response.addCookie(cookie);
