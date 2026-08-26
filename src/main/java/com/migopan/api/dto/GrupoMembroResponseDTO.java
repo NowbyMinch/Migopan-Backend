@@ -6,9 +6,11 @@ import java.time.LocalDateTime;
 public record GrupoMembroResponseDTO(
         Long usuarioId,
         String nomeUsuario,
+        String email,
         String papel,
         LocalDateTime dataEntrada,
-        Boolean bloqueado
+        Boolean bloqueado,
+        GrupoResponseDTO grupo 
 ){
     public GrupoMembroResponseDTO(GrupoMembro grupoMembro) {
         this(
@@ -17,7 +19,20 @@ public record GrupoMembroResponseDTO(
                 grupoMembro.getUsuario().getEmail(),
                 grupoMembro.getPapel(),
                 grupoMembro.getDataEntrada(),
-                grupoMembro.getBloqueado()
+                grupoMembro.getBloqueado(),
+                null 
+        );
+    }
+
+    public GrupoMembroResponseDTO(GrupoMembro grupoMembro, long totalMembrosNoGrupo) {
+        this(
+                grupoMembro.getUsuario().getId(),
+                grupoMembro.getUsuario().getNome(),
+                grupoMembro.getUsuario().getEmail(),
+                grupoMembro.getPapel(),
+                grupoMembro.getDataEntrada(),
+                grupoMembro.getBloqueado(),
+                new GrupoResponseDTO(grupoMembro.getGrupo(), totalMembrosNoGrupo)
         );
     }
 }
