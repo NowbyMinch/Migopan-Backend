@@ -15,6 +15,6 @@ import java.io.Serializable;
 @NoArgsConstructor @AllArgsConstructor
 @EqualsAndHashCode
 public class GrupoMembroId implements Serializable {
-    private Long usuario_id;
     private Long grupo_id;
+    private Long usuario_id;
 }

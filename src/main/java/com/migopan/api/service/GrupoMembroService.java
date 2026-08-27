@@ -1,13 +1,13 @@
 package com.migopan.api.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import com.migopan.api.dto.membro.*;
+import com.migopan.api.exception.AcessoNegadoException;
+import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
 import com.migopan.api.model.Usuario;
@@ -30,13 +30,15 @@ public class GrupoMembroService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    public List<GrupoMembroResponseDTO> getMembrosPorGrupo(Long grupoId){
+    public List<GrupoMembroResponseDTO> getMembrosPorGrupo(Long grupoId) {
+        if (!grupoRepository.existsById(grupoId)) {
+            throw new NotFoundException("Grupo não encontrado.");
+        }
+        
         List<GrupoMembro> membros = grupoMembroRepository.findByGrupoIdWithDetails(grupoId);
         
-        long qtd = grupoMembroRepository.countByGrupoId(grupoId);
-
         return membros.stream()
-                .map(membro -> new GrupoMembroResponseDTO(membro, qtd))
+                .map(GrupoMembroResponseDTO::new)
                 .toList();
     }
 
@@ -47,18 +49,18 @@ public class GrupoMembroService {
     @Transactional
     public GrupoMembroResponseDTO adicionarMembro(Long grupoId, Usuario usuarioLogado, GrupoMembroRequestDTO dto){
         if (!verificarSeAdmin(grupoId, usuarioLogado.getId())) {
-            throw new RuntimeException("Apenas administradores podem adicionar membros.");
+            throw new AcessoNegadoException("Apenas administradores podem adicionar membros.");
         }
 
         Grupo grupo = grupoRepository.findById(grupoId)
-            .orElseThrow(() -> new RuntimeException("Grupo não encontrado."));
+            .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
 
         Usuario usuario = usuarioRepository.findById(dto.usuarioId())
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+            .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
 
         GrupoMembroId id = new GrupoMembroId(grupoId, dto.usuarioId());        
         if (grupoMembroRepository.existsById(id)) {
-            throw new RuntimeException("Este usuário já é membro do grupo.");
+            throw new IllegalArgumentException("Este usuário já é membro do grupo.");
         }
 
         GrupoMembro grupoMembro = new GrupoMembro();
@@ -76,19 +78,18 @@ public class GrupoMembroService {
 
         GrupoMembro salvo = grupoMembroRepository.save(grupoMembro);
 
-        long qtd = grupoMembroRepository.countByGrupoId(grupoId);
-        return new GrupoMembroResponseDTO(salvo, qtd);
+        return new GrupoMembroResponseDTO(salvo);
     }
 
     @Transactional
     public String removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
-            throw new RuntimeException("Apenas administradores podem remover membros.");
+            throw new AcessoNegadoException("Apenas administradores podem remover membros.");
         }
 
         GrupoMembroId id = new GrupoMembroId(grupoId, usuarioIdMembro);
         if (!grupoMembroRepository.existsById(id)) {
-            throw new RuntimeException("Usuário não é membro do grupo.");
+            throw new NotFoundException("Usuário não é membro do grupo.");
         }
 
         grupoMembroRepository.deleteById(id);
@@ -98,12 +99,12 @@ public class GrupoMembroService {
     @Transactional
     public GrupoMembroResponseDTO atualizarMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro, AtualizarMembroRequestDTO dto) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
-            throw new RuntimeException("Apenas administradores podem atualizar membros.");
+            throw new AcessoNegadoException("Apenas administradores podem atualizar membros.");
         }
 
         GrupoMembroId id = new GrupoMembroId(grupoId, usuarioIdMembro);
         GrupoMembro grupoMembro = grupoMembroRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não é membro do grupo."));
+                .orElseThrow(() -> new NotFoundException("Usuário não é membro do grupo."));
 
         // Atualiza o status de bloqueio se foi enviado
         if (dto.bloqueado() != null) {

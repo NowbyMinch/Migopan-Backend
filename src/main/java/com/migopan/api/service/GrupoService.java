@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.migopan.api.dto.grupo.*;
+import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
@@ -67,7 +68,7 @@ public class GrupoService {
     @Transactional
     public GrupoResponseDTO atualizarGrupo(Long grupoId, Usuario usuarioLogado, AtualizarGrupoRequestDTO dto) {
         if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
-            throw new RuntimeException("Apenas administradores podem editar o grupo.");
+            throw new AcessoNegadoException("Apenas administradores podem editar o grupo.");
         }
 
        boolean atualizarNome = (dto.nome() != null && !dto.nome().isBlank());
@@ -94,12 +95,12 @@ public class GrupoService {
 
     @Transactional
     public void deletarGrupo(Long grupoId, Usuario usuarioLogado) {
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
-            throw new RuntimeException("Apenas administradores podem deletar o grupo.");
-        }
-    
         if (!grupoRepository.existsById(grupoId)) {
             throw new NotFoundException("Grupo não encontrado.");
+        }
+
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
+            throw new AcessoNegadoException("Apenas administradores podem deletar o grupo.");
         }
 
         grupoRepository.deleteById(grupoId);

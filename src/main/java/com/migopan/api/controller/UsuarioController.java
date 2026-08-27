@@ -1,115 +1,67 @@
 package com.migopan.api.controller;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
-import com.migopan.api.model.Usuario;
-import com.migopan.api.repository.UsuarioRepository;
 import com.migopan.api.dto.usuario.*;
+import com.migopan.api.model.Usuario;
+import com.migopan.api.service.UsuarioService;
 
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
 public class UsuarioController {
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UsuarioService usuarioService;
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
-        List<Usuario> usuarios = usuarioRepository.findAll();
-        
-        if (usuarios.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
-        }
+    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
+        return ResponseEntity.ok(usuarioService.listarTodos());
+    }
 
-        List<UsuarioResponseDTO> usuariosResponse = usuarios.stream()
-            .map(UsuarioResponseDTO::new)
-            .toList();
-
-        return ResponseEntity.ok(usuariosResponse);
+    @GetMapping("/perfil")
+    public ResponseEntity<UsuarioResponseDTO> perfilLogado(@AuthenticationPrincipal Usuario usuarioLogado) {
+        return ResponseEntity.ok(usuarioService.buscarPerfilLogado(usuarioLogado.getId()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUser(@PathVariable Long id) {
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
-        
-        if (usuario.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
-        }
-
-        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuario.get());
-        return ResponseEntity.ok(usuarioResponse);
+    public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
-    
+
+    @GetMapping("/{id}/publico")
+    public ResponseEntity<PerfilResponseDTO> perfilPublico(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.buscarPerfilPublico(id));
+    }
+
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody @Valid UsuarioRequestDTO dto) {
-        
-        Usuario novoUsuario = new Usuario();
-        novoUsuario.setNome(dto.nome());
-        novoUsuario.setEmail(dto.email());
-        
-        String senhaHash = passwordEncoder.encode(dto.senha());
-        novoUsuario.setSenhaHash(senhaHash);
-
-        novoUsuario.setEmailVerificado(false);
-        
-        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
-        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuarioSalvo);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioResponse);
+    public ResponseEntity<UsuarioResponseDTO> criar(@RequestBody @Valid UsuarioRequestDTO dto) {
+        UsuarioResponseDTO novoUsuario = usuarioService.criarUsuario(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid UsuarioRequestDTO dto) {
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
-
-        if (usuario.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Usuário não encontrado"));
-        }
-        
-        Usuario usuarioAtualizado = usuario.get();
-        usuarioAtualizado.setNome(dto.nome());
-        usuarioAtualizado.setEmail(dto.email());
-        usuarioAtualizado.setSenhaHash(passwordEncoder.encode(dto.senha()));
-
-        Usuario usuarioSalvo = usuarioRepository.save(usuarioAtualizado);
-        UsuarioResponseDTO usuarioResponse = new UsuarioResponseDTO(usuarioSalvo);
-
-        return ResponseEntity.ok(usuarioResponse);
+    @PatchMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> atualizar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado,
+            @RequestBody @Valid AtualizarUsuarioRequestDTO dto) {
+        UsuarioResponseDTO usuarioAtualizado = usuarioService.atualizarUsuario(id, usuarioLogado, dto);
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
-        
-        if (usuario.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Nenhum usuário encontrado"));
-        }
-
-        usuarioRepository.deleteById(id);
-
-        return ResponseEntity.ok(Map.of("message", "Usuário deletado com sucesso"));
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        usuarioService.deletarUsuario(id, usuarioLogado);
+        return ResponseEntity.noContent().build();
     }
-    
 }
