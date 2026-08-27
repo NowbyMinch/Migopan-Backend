@@ -65,7 +65,7 @@ public class GrupoService {
     }
 
     @Transactional
-    public GrupoResponseDTO atualizarGrupo(Long grupoId, Usuario usuarioLogado, GrupoRequestDTO dto) {
+    public GrupoResponseDTO atualizarGrupo(Long grupoId, Usuario usuarioLogado, AtualizarGrupoRequestDTO dto) {
         if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
             throw new RuntimeException("Apenas administradores podem editar o grupo.");
         }
@@ -93,7 +93,7 @@ public class GrupoService {
     }
 
     @Transactional
-    public boolean deletarGrupo(Long grupoId, Usuario usuarioLogado) {
+    public void deletarGrupo(Long grupoId, Usuario usuarioLogado) {
         if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
             throw new RuntimeException("Apenas administradores podem deletar o grupo.");
         }
@@ -103,8 +103,6 @@ public class GrupoService {
         }
 
         grupoRepository.deleteById(grupoId);
-
-        return true;
     }
 
     public List<GrupoResponseDTO> listarTodos() {

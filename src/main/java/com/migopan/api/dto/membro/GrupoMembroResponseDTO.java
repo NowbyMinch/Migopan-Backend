@@ -20,7 +20,7 @@ public record GrupoMembroResponseDTO(
                 grupoMembro.getPapel(),
                 grupoMembro.getDataEntrada(),
                 grupoMembro.getBloqueado(),
-                null 
+                null
         );
     }
 

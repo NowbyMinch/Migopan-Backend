@@ -1,7 +1,5 @@
 package com.migopan.api.dto.grupo;
 
-import java.time.LocalDateTime;
-
 import com.migopan.api.model.Grupo;
 
 public record GrupoResponseDTO(

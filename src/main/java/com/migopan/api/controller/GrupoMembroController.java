@@ -38,10 +38,10 @@ public class GrupoMembroController {
     @PostMapping("/{grupoId}/membros")
     public ResponseEntity<GrupoMembroResponseDTO> adicionarMembro (
             @PathVariable Long grupoId, 
-            @AuthenticationPrincipal Usuario usuarioIdAdminLogado,
+            @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestBody @Valid GrupoMembroRequestDTO dto){
         
-        GrupoMembroResponseDTO novoMembro = grupoMembroService.adicionarMembro(grupoId, usuarioIdAdminLogado.getId(), dto);
+        GrupoMembroResponseDTO novoMembro = grupoMembroService.adicionarMembro(grupoId, usuarioLogado, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoMembro);
     }
 

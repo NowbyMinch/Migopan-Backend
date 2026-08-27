@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import com.migopan.api.dto.membro.*;
@@ -30,8 +31,12 @@ public class GrupoMembroService {
     private UsuarioRepository usuarioRepository;
 
     public List<GrupoMembroResponseDTO> getMembrosPorGrupo(Long grupoId){
-        return grupoMembroRepository.findByGrupoId(grupoId).stream()
-                .map(GrupoMembroResponseDTO::new)
+        List<GrupoMembro> membros = grupoMembroRepository.findByGrupoIdWithDetails(grupoId);
+        
+        long qtd = grupoMembroRepository.countByGrupoId(grupoId);
+
+        return membros.stream()
+                .map(membro -> new GrupoMembroResponseDTO(membro, qtd))
                 .toList();
     }
 
@@ -40,8 +45,8 @@ public class GrupoMembroService {
     }
 
     @Transactional
-    public GrupoMembroResponseDTO adicionarMembro(Long grupoId, Long usuarioIdAdminLogado, GrupoMembroRequestDTO dto){
-        if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
+    public GrupoMembroResponseDTO adicionarMembro(Long grupoId, Usuario usuarioLogado, GrupoMembroRequestDTO dto){
+        if (!verificarSeAdmin(grupoId, usuarioLogado.getId())) {
             throw new RuntimeException("Apenas administradores podem adicionar membros.");
         }
 
@@ -53,7 +58,7 @@ public class GrupoMembroService {
 
         GrupoMembroId id = new GrupoMembroId(grupoId, dto.usuarioId());        
         if (grupoMembroRepository.existsById(id)) {
-            throw new RuntimeException("Usuário já é membro do grupo.");
+            throw new RuntimeException("Este usuário já é membro do grupo.");
         }
 
         GrupoMembro grupoMembro = new GrupoMembro();
@@ -63,12 +68,16 @@ public class GrupoMembroService {
 
         if (dto.papel() != null && !dto.papel().isBlank()) {
             grupoMembro.setPapel(dto.papel());
-        } 
+        } else {
+             grupoMembro.setPapel("MEMBRO");
+        }
 
         grupoMembro.setBloqueado(false);
 
         GrupoMembro salvo = grupoMembroRepository.save(grupoMembro);
-        return new GrupoMembroResponseDTO(salvo);
+
+        long qtd = grupoMembroRepository.countByGrupoId(grupoId);
+        return new GrupoMembroResponseDTO(salvo, qtd);
     }
 
     @Transactional

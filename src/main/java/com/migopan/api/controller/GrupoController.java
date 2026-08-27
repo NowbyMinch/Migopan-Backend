@@ -51,20 +51,14 @@ public class GrupoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
-        boolean deletado = grupoService.deletarGrupo(id, usuarioLogado);
-
-        if (!deletado) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Grupo não encontrado com o ID: " + id));
-        }
-
-        return ResponseEntity.ok(Map.of("message", "Grupo com ID: " + id + " deletado com sucesso."));
+        grupoService.deletarGrupo(id, usuarioLogado);
+        return ResponseEntity.noContent().build(); 
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado, @RequestBody @Valid GrupoRequestDTO dto) {
-        grupoService.atualizarGrupo(id, usuarioLogado,dto);
-        return ResponseEntity.ok(Map.of("message","Grupo atualizado com sucesso: "));
+    public ResponseEntity<?> update(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado, @RequestBody @Valid AtualizarGrupoRequestDTO dto) {
+        GrupoResponseDTO atualizado = grupoService.atualizarGrupo(id, usuarioLogado, dto);
+        return ResponseEntity.ok(atualizado);
     }
 
 }
