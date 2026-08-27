@@ -1,4 +1,4 @@
-package com.migopan.api.dto;
+package com.migopan.api.dto.usuario;
 
 import com.migopan.api.model.Usuario;
 import java.math.BigDecimal;

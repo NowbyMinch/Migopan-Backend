@@ -1,5 +1,9 @@
+package com.migopan.api.dto.membro;
+
+import jakarta.validation.constraints.Pattern;
+
 public record AtualizarMembroRequestDTO(
-    @Pattern(regexp = "ADMIN|MEMBRO", mensagem = "O papel deve ser 'ADMIN' ou 'MEMBRO'")
+    @Pattern(regexp = "ADMIN|MEMBRO", message = "O papel deve ser 'ADMIN' ou 'MEMBRO'")
     String papel,
     
     Boolean bloqueado

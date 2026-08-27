@@ -1,4 +1,4 @@
-package com.migopan.api.dto;
+package com.migopan.api.dto.grupo;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +11,10 @@ public record GrupoResponseDTO(
     Long quantidadeMembros
 ) {
     public GrupoResponseDTO(Grupo grupo) {
+        this(grupo.getId(), grupo.getNome(), grupo.getDescricao(), 1L);
+    }
+
+    public GrupoResponseDTO(Grupo grupo, Long quantidadeMembros) {
         this(grupo.getId(), grupo.getNome(), grupo.getDescricao(), quantidadeMembros);
     }
 }

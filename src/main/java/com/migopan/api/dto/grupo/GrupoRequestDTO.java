@@ -1,4 +1,4 @@
-package com.migopan.api.dto;
+package com.migopan.api.dto.grupo;
 
 import jakarta.validation.constraints.NotBlank;
 

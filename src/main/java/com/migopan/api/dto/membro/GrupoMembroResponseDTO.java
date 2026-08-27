@@ -1,5 +1,6 @@
-package com.migopan.api.dto;
+package com.migopan.api.dto.membro;
 
+import com.migopan.api.dto.grupo.*;
 import com.migopan.api.model.GrupoMembro;
 import java.time.LocalDateTime;
 

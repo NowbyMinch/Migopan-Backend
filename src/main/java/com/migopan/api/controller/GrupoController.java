@@ -2,7 +2,6 @@ package com.migopan.api.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,11 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
-import com.migopan.api.dto.GrupoRequestDTO;
-import com.migopan.api.dto.GrupoResponseDTO;
-import com.migopan.api.model.Grupo;
+import com.migopan.api.dto.grupo.*;
 import com.migopan.api.model.Usuario;
-import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.service.GrupoService;
 
 
@@ -40,25 +36,22 @@ public class GrupoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getGrupo(@PathVariable Long id) {
-        Optional<GrupoResponseDTO> grupo = grupoService.GrupoPorId(id);
-        if (grupo.isEmpty()) {
-            return ResponseEntity.ok(Map.of("message", "Grupo não encontrado."));
-        }
+    public ResponseEntity<GrupoResponseDTO> getGrupo(@PathVariable Long id) {
+        GrupoResponseDTO grupo = grupoService.grupoPorId(id);
         
-        return ResponseEntity.ok(new GrupoResponseDTO(grupo.get()));
+        return ResponseEntity.ok(grupo);
     }
 
     @PostMapping
     public ResponseEntity<GrupoResponseDTO> create(@RequestBody @Valid GrupoRequestDTO dto, @AuthenticationPrincipal Usuario usuarioLogado) {
-        Grupo saved = grupoService.criarGrupo(dto, usuarioLogado);
+        GrupoResponseDTO saved = grupoService.criarGrupo(dto, usuarioLogado);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new GrupoResponseDTO(saved, 1L));
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        boolean deletado = grupoService.deletar(id);
+    public ResponseEntity<?> delete(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
+        boolean deletado = grupoService.deletarGrupo(id, usuarioLogado);
 
         if (!deletado) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -69,14 +62,8 @@ public class GrupoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid GrupoRequestDTO dto) {
-        Optional<Grupo> saved = grupoService.atualizar(id, dto);
-
-        if (saved.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Grupo não encontrado com o ID: " + id));
-        }
-
+    public ResponseEntity<?> update(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado, @RequestBody @Valid GrupoRequestDTO dto) {
+        grupoService.atualizarGrupo(id, usuarioLogado,dto);
         return ResponseEntity.ok(Map.of("message","Grupo atualizado com sucesso: "));
     }
 

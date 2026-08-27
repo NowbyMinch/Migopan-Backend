@@ -6,8 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.migopan.api.dto.GrupoMembroRequestDTO;
-import com.migopan.api.dto.GrupoMembroResponseDTO;
+import com.migopan.api.dto.membro.*;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
 import com.migopan.api.model.Usuario;
@@ -15,6 +14,7 @@ import com.migopan.api.model.keys.GrupoMembroId;
 import com.migopan.api.repository.GrupoMembroRepository;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.repository.UsuarioRepository;
+
 
 import jakarta.transaction.Transactional;
 
@@ -36,7 +36,7 @@ public class GrupoMembroService {
     }
 
     public boolean verificarSeAdmin(Long grupoId, Long usuarioId) {
-        boolean grupoMembroRepository.existsByGroupIdAndUsuarioIdAndPapel(grupoId, usuarioId, "ADMIN");
+        return grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioId, "ADMIN");
     }
 
     @Transactional
@@ -72,7 +72,7 @@ public class GrupoMembroService {
     }
 
     @Transactional
-    public String removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {`
+    public String removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
             throw new RuntimeException("Apenas administradores podem remover membros.");
         }
@@ -87,21 +87,27 @@ public class GrupoMembroService {
     }
 
     @Transactional
-    public String atualizarPapel(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro, String novoPapel) {
+    public GrupoMembroResponseDTO atualizarMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro, AtualizarMembroRequestDTO dto) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
-            throw new RuntimeException("Apenas administradores podem atualizar o papel dos membros.");
+            throw new RuntimeException("Apenas administradores podem atualizar membros.");
         }
 
-        GrupoMembro id = new GrupoMembroId(grupoId, usuarioIdMembro);
-        
+        GrupoMembroId id = new GrupoMembroId(grupoId, usuarioIdMembro);
         GrupoMembro grupoMembro = grupoMembroRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não é membro do grupo."));
-        
-        GrupoMembro membro = grupoMembro.get();
-        membro.setPapel(novoPapel);
-        grupoMembroRepository.save(membro);
 
-        return "Papel do membro atualizado com sucesso.";
+        // Atualiza o status de bloqueio se foi enviado
+        if (dto.bloqueado() != null) {
+            grupoMembro.setBloqueado(dto.bloqueado());
+        }
+
+        // Se você quiser permitir atualizar o papel também de forma controlada, pode adicionar aqui:
+        if (dto.papel() != null && !dto.papel().isBlank()) {
+            grupoMembro.setPapel(dto.papel());
+        }
+
+        GrupoMembro salvo = grupoMembroRepository.save(grupoMembro);
+        return new GrupoMembroResponseDTO(salvo);
     }
 
 }

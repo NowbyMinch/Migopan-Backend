@@ -5,8 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.migopan.api.dto.GrupoRequestDTO;
-import com.migopan.api.dto.GrupoResponseDTO;
+import com.migopan.api.dto.grupo.*;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
@@ -36,12 +35,15 @@ public class GrupoService {
         }
 
         List<Grupo> grupos = grupoMembroRepository.findGruposByUsuarioId(usuarioId);
-        return grupos.stream().map(GrupoResponseDTO::new).toList();
+        return grupos.stream().map(grupo -> {
+            long qtd = grupoMembroRepository.countByGrupoId(grupo.getId());
+            return new GrupoResponseDTO(grupo, qtd);
+        }).toList();
     }
 
     @Transactional
-    public GrupoResponseDTO criarGrupo(GrupoRequestDTO dto, Long usuarioIdLogado) {
-        Usuario usuario = usuarioRepository.findById(usuarioIdLogado)
+    public GrupoResponseDTO criarGrupo(GrupoRequestDTO dto, Usuario usuarioLogado) {
+        Usuario usuario = usuarioRepository.findById(usuarioLogado.getId())
                 .orElseThrow(() -> new NotFoundException("Usuário criador não encontrado."));
 
         Grupo grupo = new Grupo();
@@ -49,7 +51,7 @@ public class GrupoService {
         grupo.setDescricao(dto.descricao());
         Grupo grupoSalvo = grupoRepository.save(grupo);
 
-        GrupoMembroId id = new GrupoMembroId(grupoSalvo.getId(), usuarioIdLogado);
+        GrupoMembroId id = new GrupoMembroId(grupoSalvo.getId(), usuarioLogado.getId());
         GrupoMembro membro = new GrupoMembro();
         membro.setId(id);
         membro.setGrupo(grupoSalvo);
@@ -59,40 +61,40 @@ public class GrupoService {
 
         grupoMembroRepository.save(membro);
 
-        return new GrupoResponseDTO(grupoSalvo);
+        return new GrupoResponseDTO(grupoSalvo, 1L);
     }
 
     @Transactional
-    public GrupoResponseDTO atualizarGrupo(Long grupoId, Long usuarioIdLogado, GrupoRequestDTO dto) {
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioIdLogado, "ADMIN")) {
+    public GrupoResponseDTO atualizarGrupo(Long grupoId, Usuario usuarioLogado, GrupoRequestDTO dto) {
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
             throw new RuntimeException("Apenas administradores podem editar o grupo.");
         }
 
-        boolean nomeVazio = (dto.nome() == null && dto.nome().isBlank());
-        boolean descricaoVazia = (dto.descricao() == null);
+       boolean atualizarNome = (dto.nome() != null && !dto.nome().isBlank());
+        boolean atualizarDescricao = (dto.descricao() != null);
 
-        if (nomeVazio && descricaoVazia) {
+        if (!atualizarNome && !atualizarDescricao) {
             throw new IllegalArgumentException("Nenhum dado foi fornecido para atualização.");
         }
 
         Grupo grupo = grupoRepository.findById(grupoId)
-                .orElseThrow(() -> new NotFoundException
-                ("Grupo não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
 
-        if (!nomeVazio){ 
+        if (atualizarNome) { 
             grupo.setNome(dto.nome());
         }
-        if (!descricaoVazia){ 
+        if (atualizarDescricao) { 
             grupo.setDescricao(dto.descricao());
         }
 
         Grupo salvo = grupoRepository.save(grupo);
-        return new GrupoResponseDTO(salvo);
+        long qtd = grupoMembroRepository.countByGrupoId(salvo.getId());
+        return new GrupoResponseDTO(salvo, qtd);
     }
 
     @Transactional
-    public void deletarGrupo(Long grupoId, Long usuarioIdLogado) {
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioIdLogado, "ADMIN")) {
+    public boolean deletarGrupo(Long grupoId, Usuario usuarioLogado) {
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
             throw new RuntimeException("Apenas administradores podem deletar o grupo.");
         }
     
@@ -101,12 +103,14 @@ public class GrupoService {
         }
 
         grupoRepository.deleteById(grupoId);
+
+        return true;
     }
 
     public List<GrupoResponseDTO> listarTodos() {
         return grupoRepository.findAll().stream()
                 .map(grupo -> { 
-                    long qtd = grupoMembroRepository.countByGroupId(grupo.getId());
+                    long qtd = grupoMembroRepository.countByGrupoId(grupo.getId());
                     return new GrupoResponseDTO(grupo, qtd);
                 }).toList();
     }
@@ -115,7 +119,7 @@ public class GrupoService {
         Grupo grupo = grupoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
         
-        long qtd = grupoMembroRepository.countByGroupId(id);
+        long qtd = grupoMembroRepository.countByGrupoId(id);
         return new GrupoResponseDTO(grupo, qtd);
     }
 }
