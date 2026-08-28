@@ -24,7 +24,6 @@ import com.migopan.api.model.Usuario;
 
 @RestController
 @RequestMapping("/api/grupos")
-@CrossOrigin(origins = "*")
 public class GrupoMembroController {
     @Autowired
     private GrupoMembroService grupoMembroService;

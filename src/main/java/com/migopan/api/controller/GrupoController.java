@@ -18,7 +18,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/grupos")
-@CrossOrigin(origins = "*")
 public class GrupoController {
 
     @Autowired

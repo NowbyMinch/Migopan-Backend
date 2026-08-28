@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste API - Auth</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 0 16px;
+    background: #f5f4f1;
+    color: #2b2a27;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.sub { color: #6b6a65; font-size: 13px; margin-top: 0; margin-bottom: 24px; }
+  .card {
+    background: #fff;
+    border: 1px solid #e3e1db;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.04em; color: #55534d; }
+  label { display: block; font-size: 12px; color: #55534d; margin-bottom: 4px; margin-top: 10px; }
+  input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d8d6cf;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  button {
+    margin-top: 12px;
+    width: 100%;
+    padding: 9px;
+    border: none;
+    border-radius: 6px;
+    background: #2b2a27;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background: #45443f; }
+  button.secondary { background: #fff; color: #2b2a27; border: 1px solid #d8d6cf; }
+  button.secondary:hover { background: #f0efe9; }
+  pre#log {
+    background: #1e1d1a;
+    color: #d8f0d8;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    max-height: 260px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .row { display: flex; gap: 8px; }
+  .row button { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Teste da API — Migopan</h1>
+<p class="sub">Cadastro, login, perfil e logout. Roda contra o backend Spring Boot local.</p>
+
+<div class="card">
+  <h2>URL do backend</h2>
+  <input id="baseUrl" value="http://localhost:8080" />
+</div>
+
+<div class="card">
+  <h2>Cadastrar usuário</h2>
+  <label>Nome</label>
+  <input id="cadNome" placeholder="Guilherme" />
+  <label>Email</label>
+  <input id="cadEmail" placeholder="voce@exemplo.com" />
+  <label>Senha</label>
+  <input id="cadSenha" type="password" placeholder="••••••••" />
+  <button onclick="cadastrar()">Cadastrar</button>
+</div>
+
+<div class="card">
+  <h2>Login</h2>
+  <label>Email</label>
+  <input id="loginEmail" placeholder="voce@exemplo.com" />
+  <label>Senha</label>
+  <input id="loginSenha" type="password" placeholder="••••••••" />
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div class="card">
+  <h2>Sessão</h2>
+  <div class="row" style="gap:8px;">
+    <button class="secondary" onclick="verPerfil()">Ver perfil logado</button>
+    <button class="secondary" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Log das requisições</h2>
+  <pre id="log">Aguardando ação...</pre>
+</div>
+
+<script>
+function baseUrl() {
+  return document.getElementById('baseUrl').value.replace(/\/$/, '');
+}
+
+function log(titulo, dados) {
+  const el = document.getElementById('log');
+  const hora = new Date().toLocaleTimeString();
+  const corpo = typeof dados === 'string' ? dados : JSON.stringify(dados, null, 2);
+  el.textContent = `[${hora}] ${titulo}\n${corpo}\n\n` + el.textContent;
+}
+
+async function chamar(path, options = {}) {
+  try {
+    const resp = await fetch(baseUrl() + path, {
+      credentials: 'include', // ESSENCIAL: manda/recebe o cookie httpOnly
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+    let corpo;
+    const texto = await resp.text();
+    try { corpo = texto ? JSON.parse(texto) : null; } catch { corpo = texto; }
+
+    log(`${options.method || 'GET'} ${path} → ${resp.status}`, corpo);
+    return { ok: resp.ok, status: resp.status, corpo };
+  } catch (erro) {
+    log(`ERRO em ${path}`, erro.message + '\n\nProvavelmente é CORS ou o backend não está rodando. Confira a URL acima e se o backend permite a origem desta página (CorsConfig.java).');
+    throw erro;
+  }
+}
+
+function cadastrar() {
+  const nome = document.getElementById('cadNome').value;
+  const email = document.getElementById('cadEmail').value;
+  const senha = document.getElementById('cadSenha').value;
+  chamar('/api/usuarios', {
+    method: 'POST',
+    body: JSON.stringify({ nome, email, senha }),
+  });
+}
+
+function login() {
+  const email = document.getElementById('loginEmail').value;
+  const senha = document.getElementById('loginSenha').value;
+  chamar('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, senha }),
+  });
+}
+
+function verPerfil() {
+  chamar('/api/usuarios/perfil', { method: 'GET' });
+}
+
+function logout() {
+  chamar('/api/auth/logout', { method: 'POST' });
+}
+</script>
+
+</body>
+</html>

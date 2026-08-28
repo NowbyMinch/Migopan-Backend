@@ -98,9 +98,9 @@ public class TarefaService {
         List<Tarefa> tarefas;
 
         if (concluida != null) {
-            tarefas = tarefaRepository.findByGrupoIdAndConcluida(usuarioLogado.getId(), concluida);
+            tarefas = tarefaRepository.findByGrupoIdAndConcluida(grupoId, concluida);
         } else {
-            tarefas = tarefaRepository.findByGrupoId(usuarioLogado.getId());
+            tarefas = tarefaRepository.findByGrupoId(grupoId);
         }
 
         return tarefas.stream().map(TarefaResponseDTO::new).toList();

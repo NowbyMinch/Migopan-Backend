@@ -18,7 +18,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/tarefas")
-@CrossOrigin(origins = "*")
 public class TarefaController {
     @Autowired
     private TarefaService tarefaService;
@@ -45,14 +44,14 @@ public class TarefaController {
         return ResponseEntity.ok(tarefas);
     }
     
-    @GetMapping("/{id}/concluir")
+    @PatchMapping("/{id}/concluir")
     public ResponseEntity<TarefaResponseDTO> AlterarConclusao(@PathVariable Long id,
             @AuthenticationPrincipal Usuario usuarioLogado) {
         TarefaResponseDTO tarefa = tarefaService.AlterarConclusao(id, usuarioLogado);
         return ResponseEntity.ok(tarefa);
     }
     
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<TarefaResponseDTO> atualizar(
             @PathVariable Long id,
             @AuthenticationPrincipal Usuario usuarioLogado,

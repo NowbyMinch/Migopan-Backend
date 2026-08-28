@@ -15,7 +15,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -30,14 +29,8 @@ public class AuthController {
         String senha = credentials.get("senha");
 
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-        // if (usuario == null || passwordEncoder.matches(senha, usuario.getSenhaHash())) {
-        //     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"));
-        // }
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Usuário inexistente"));
-        }
-        else if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Senha incorreta"));
+        if (usuario == null || passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"));
         }
 
         String token = jwtService.gerarToken(usuario.getEmail());
