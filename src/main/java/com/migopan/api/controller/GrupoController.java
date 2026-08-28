@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
-import com.migopan.api.dto.grupo.*;
+import com.migopan.api.dto.GrupoDTOs.*;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.service.GrupoService;
 

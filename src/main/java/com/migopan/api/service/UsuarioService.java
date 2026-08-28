@@ -7,7 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.migopan.api.dto.usuario.*;
+import com.migopan.api.dto.UsuarioDTOs.*;
 import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Usuario;

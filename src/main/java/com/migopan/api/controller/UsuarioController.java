@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.migopan.api.dto.usuario.*;
+import com.migopan.api.dto.UsuarioDTOs.*;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.service.UsuarioService;
 

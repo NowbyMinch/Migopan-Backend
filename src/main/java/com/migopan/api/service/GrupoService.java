@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.migopan.api.dto.grupo.*;
+import com.migopan.api.dto.GrupoDTOs.*;
 import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
