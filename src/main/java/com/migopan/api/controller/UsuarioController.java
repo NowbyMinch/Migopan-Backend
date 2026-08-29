@@ -28,6 +28,7 @@ public class UsuarioController {
 
     @GetMapping("/perfil")
     public ResponseEntity<UsuarioResponseDTO> perfilLogado(@AuthenticationPrincipal Usuario usuarioLogado) {
+        System.out.println(usuarioLogado);
         return ResponseEntity.ok(usuarioService.buscarPerfilLogado(usuarioLogado.getId()));
     }
 

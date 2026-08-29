@@ -100,6 +100,54 @@
 </div>
 
 <div class="card">
+  <h2>Criar grupo</h2>
+  <label>Nome do grupo</label>
+  <input id="grupoNome" placeholder="Casa" />
+  <label>Descrição</label>
+  <input id="grupoDescricao" placeholder="Tarefas da casa" />
+  <button onclick="criarGrupo()">Criar grupo</button>
+</div>
+
+<div class="card">
+  <h2>Ver membros de um grupo</h2>
+  <label>ID do grupo</label>
+  <input id="verMembrosGrupoId" placeholder="1" />
+  <button class="secondary" onclick="verMembros()">Listar membros</button>
+</div>
+
+<div class="card">
+  <h2>Adicionar membro ao grupo</h2>
+  <label>ID do grupo</label>
+  <input id="addMembroGrupoId" placeholder="1" />
+  <label>ID do usuário a adicionar</label>
+  <input id="addMembroUsuarioId" placeholder="2" />
+  <label>Papel (opcional — ADMIN ou MEMBRO)</label>
+  <input id="addMembroPapel" placeholder="MEMBRO" />
+  <button onclick="adicionarMembro()">Adicionar membro</button>
+</div>
+
+<div class="card">
+  <h2>Criar tarefa</h2>
+  <label>Título</label>
+  <input id="tarefaTitulo" placeholder="Lavar louça" />
+  <label>Descrição</label>
+  <input id="tarefaDescricao" placeholder="Depois do jantar" />
+  <label>ID do grupo (deixe vazio para tarefa pessoal)</label>
+  <input id="tarefaGrupoId" placeholder="" />
+  <button onclick="criarTarefa()">Criar tarefa</button>
+</div>
+
+<div class="card">
+  <h2>Listar tarefas</h2>
+  <div class="row" style="gap:8px;">
+    <button class="secondary" onclick="listarTarefasPessoais()">Minhas tarefas pessoais</button>
+  </div>
+  <label style="margin-top:14px;">ID do grupo para listar tarefas</label>
+  <input id="listarTarefasGrupoId" placeholder="1" />
+  <button class="secondary" onclick="listarTarefasGrupo()">Listar tarefas do grupo</button>
+</div>
+
+<div class="card">
   <h2>Log das requisições</h2>
   <pre id="log">Aguardando ação...</pre>
 </div>
@@ -160,6 +208,50 @@ function verPerfil() {
 
 function logout() {
   chamar('/api/auth/logout', { method: 'POST' });
+}
+
+function criarGrupo() {
+  const nome = document.getElementById('grupoNome').value;
+  const descricao = document.getElementById('grupoDescricao').value;
+  chamar('/api/grupos', {
+    method: 'POST',
+    body: JSON.stringify({ nome, descricao }),
+  });
+}
+
+function verMembros() {
+  const grupoId = document.getElementById('verMembrosGrupoId').value;
+  chamar(`/api/grupos/${grupoId}/membros`, { method: 'GET' });
+}
+
+function adicionarMembro() {
+  const grupoId = document.getElementById('addMembroGrupoId').value;
+  const usuarioId = Number(document.getElementById('addMembroUsuarioId').value);
+  const papel = document.getElementById('addMembroPapel').value || undefined;
+  chamar(`/api/grupos/${grupoId}/membros`, {
+    method: 'POST',
+    body: JSON.stringify({ usuarioId, papel }),
+  });
+}
+
+function criarTarefa() {
+  const titulo = document.getElementById('tarefaTitulo').value;
+  const descricao = document.getElementById('tarefaDescricao').value;
+  const grupoIdRaw = document.getElementById('tarefaGrupoId').value;
+  const grupoId = grupoIdRaw ? Number(grupoIdRaw) : null;
+  chamar('/api/tarefas', {
+    method: 'POST',
+    body: JSON.stringify({ titulo, descricao, grupoId }),
+  });
+}
+
+function listarTarefasPessoais() {
+  chamar('/api/tarefas/pessoais', { method: 'GET' });
+}
+
+function listarTarefasGrupo() {
+  const grupoId = document.getElementById('listarTarefasGrupoId').value;
+  chamar(`/api/tarefas/grupo/${grupoId}`, { method: 'GET' });
 }
 </script>
 

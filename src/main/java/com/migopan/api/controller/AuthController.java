@@ -29,7 +29,7 @@ public class AuthController {
         String senha = credentials.get("senha");
 
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-        if (usuario == null || passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+        if (usuario == null || !passwordEncoder.matches(senha, usuario.getSenhaHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"));
         }
 
