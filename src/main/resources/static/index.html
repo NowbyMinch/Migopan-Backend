@@ -1,259 +1,585 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teste API - Auth</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
-    max-width: 480px;
-    margin: 40px auto;
-    padding: 0 16px;
-    background: #f5f4f1;
-    color: #2b2a27;
-  }
-  h1 { font-size: 20px; margin-bottom: 4px; }
-  p.sub { color: #6b6a65; font-size: 13px; margin-top: 0; margin-bottom: 24px; }
-  .card {
-    background: #fff;
-    border: 1px solid #e3e1db;
-    border-radius: 10px;
-    padding: 18px;
-    margin-bottom: 16px;
-  }
-  .card h2 { font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.04em; color: #55534d; }
-  label { display: block; font-size: 12px; color: #55534d; margin-bottom: 4px; margin-top: 10px; }
-  input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #d8d6cf;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-  button {
-    margin-top: 12px;
-    width: 100%;
-    padding: 9px;
-    border: none;
-    border-radius: 6px;
-    background: #2b2a27;
-    color: #fff;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  button:hover { background: #45443f; }
-  button.secondary { background: #fff; color: #2b2a27; border: 1px solid #d8d6cf; }
-  button.secondary:hover { background: #f0efe9; }
-  pre#log {
-    background: #1e1d1a;
-    color: #d8f0d8;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    max-height: 260px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .row { display: flex; gap: 8px; }
-  .row button { margin-top: 12px; }
-</style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MigoPan — Trello Board</title>
+    <style>
+      :root {
+        --bg-main: #f4f5f7;
+        --card-bg: #ffffff;
+        --border-color: #dfe1e6;
+        --text-main: #172b4d;
+        --text-muted: #5e6c84;
+        --primary: #0079bf;
+        --primary-hover: #026aa7;
+        --danger: #eb5a46;
+        --success: #61bd4f;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      body {
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
 
-<h1>Teste da API — Migopan</h1>
-<p class="sub">Cadastro, login, perfil e logout. Roda contra o backend Spring Boot local.</p>
+      /* SIDEBAR / CONFIGURAÇÕES E AUTH */
+      aside {
+        width: 320px;
+        background: #fff;
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        z-index: 10;
+      }
+      .sidebar-header {
+        padding: 20px;
+        background: #0747a6;
+        color: white;
+      }
+      .sidebar-header h1 {
+        font-size: 18px;
+        margin-bottom: 4px;
+      }
+      .sidebar-header p {
+        font-size: 12px;
+        opacity: 0.8;
+      }
 
-<div class="card">
-  <h2>URL do backend</h2>
-  <input id="baseUrl" value="http://localhost:8080" />
-</div>
+      .sidebar-content {
+        padding: 16px;
+        overflow-y: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .panel-section {
+        background: #fafbfc;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .panel-section h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
 
-<div class="card">
-  <h2>Cadastrar usuário</h2>
-  <label>Nome</label>
-  <input id="cadNome" placeholder="Guilherme" />
-  <label>Email</label>
-  <input id="cadEmail" placeholder="voce@exemplo.com" />
-  <label>Senha</label>
-  <input id="cadSenha" type="password" placeholder="••••••••" />
-  <button onclick="cadastrar()">Cadastrar</button>
-</div>
+      label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 3px;
+        margin-top: 8px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 13px;
+        background: #fff;
+      }
+      input:focus,
+      select:focus {
+        outline: 2px solid var(--primary);
+        border-color: transparent;
+      }
 
-<div class="card">
-  <h2>Login</h2>
-  <label>Email</label>
-  <input id="loginEmail" placeholder="voce@exemplo.com" />
-  <label>Senha</label>
-  <input id="loginSenha" type="password" placeholder="••••••••" />
-  <button onclick="login()">Entrar</button>
-</div>
+      button {
+        margin-top: 10px;
+        width: 100%;
+        padding: 7px 10px;
+        border: none;
+        border-radius: 4px;
+        background: var(--primary);
+        color: white;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      button:hover {
+        background: var(--primary-hover);
+      }
+      button.secondary {
+        background: #ebecf0;
+        color: var(--text-main);
+      }
+      button.secondary:hover {
+        background: #dfe1e6;
+      }
+      button.danger {
+        background: var(--danger);
+        color: white;
+      }
+      button.danger:hover {
+        background: #cf513d;
+      }
 
-<div class="card">
-  <h2>Sessão</h2>
-  <div class="row" style="gap:8px;">
-    <button class="secondary" onclick="verPerfil()">Ver perfil logado</button>
-    <button class="secondary" onclick="logout()">Logout</button>
-  </div>
-</div>
+      /* CONTEÚDO PRINCIPAL / BOARD KANBAN */
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+      header.topbar {
+        padding: 16px 24px;
+        background: #fff;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      header.topbar h2 {
+        font-size: 18px;
+        color: var(--text-main);
+      }
+      .badge-session {
+        font-size: 12px;
+        padding: 4px 8px;
+        background: #e3fcef;
+        color: #0f5132;
+        border-radius: 4px;
+        font-weight: 500;
+      }
 
-<div class="card">
-  <h2>Criar grupo</h2>
-  <label>Nome do grupo</label>
-  <input id="grupoNome" placeholder="Casa" />
-  <label>Descrição</label>
-  <input id="grupoDescricao" placeholder="Tarefas da casa" />
-  <button onclick="criarGrupo()">Criar grupo</button>
-</div>
+      .board-container {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        align-items: flex-start;
+      }
 
-<div class="card">
-  <h2>Ver membros de um grupo</h2>
-  <label>ID do grupo</label>
-  <input id="verMembrosGrupoId" placeholder="1" />
-  <button class="secondary" onclick="verMembros()">Listar membros</button>
-</div>
+      .column {
+        background: #ebecf0;
+        width: 280px;
+        min-width: 280px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 100px);
+      }
+      .column-header {
+        padding: 12px 16px;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .column-body {
+        padding: 0 8px 8px 8px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
 
-<div class="card">
-  <h2>Adicionar membro ao grupo</h2>
-  <label>ID do grupo</label>
-  <input id="addMembroGrupoId" placeholder="1" />
-  <label>ID do usuário a adicionar</label>
-  <input id="addMembroUsuarioId" placeholder="2" />
-  <label>Papel (opcional — ADMIN ou MEMBRO)</label>
-  <input id="addMembroPapel" placeholder="MEMBRO" />
-  <button onclick="adicionarMembro()">Adicionar membro</button>
-</div>
+      .task-card {
+        background: var(--card-bg);
+        padding: 10px 12px;
+        border-radius: 6px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+        font-size: 13px;
+      }
+      .task-card h4 {
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: var(--text-main);
+      }
+      .task-card p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
 
-<div class="card">
-  <h2>Criar tarefa</h2>
-  <label>Título</label>
-  <input id="tarefaTitulo" placeholder="Lavar louça" />
-  <label>Descrição</label>
-  <input id="tarefaDescricao" placeholder="Depois do jantar" />
-  <label>ID do grupo (deixe vazio para tarefa pessoal)</label>
-  <input id="tarefaGrupoId" placeholder="" />
-  <button onclick="criarTarefa()">Criar tarefa</button>
-</div>
+      /* LOGS */
+      .console-wrapper {
+        height: 140px;
+        background: #1e1d1a;
+        border-top: 1px solid var(--border-color);
+        padding: 12px 20px;
+        display: flex;
+        flex-direction: column;
+      }
+      .console-wrapper h3 {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #9ba1a6;
+        margin-bottom: 4px;
+      }
+      pre#log {
+        background: transparent;
+        color: #7ee787;
+        font-family: monospace;
+        font-size: 11px;
+        overflow-y: auto;
+        flex: 1;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- BARRA LATERAL (CONTROLES E API) -->
+    <aside>
+      <div class="sidebar-header">
+        <h1>MigoPan Board</h1>
+        <p>Painel Integrado com Backend</p>
+      </div>
 
-<div class="card">
-  <h2>Listar tarefas</h2>
-  <div class="row" style="gap:8px;">
-    <button class="secondary" onclick="listarTarefasPessoais()">Minhas tarefas pessoais</button>
-  </div>
-  <label style="margin-top:14px;">ID do grupo para listar tarefas</label>
-  <input id="listarTarefasGrupoId" placeholder="1" />
-  <button class="secondary" onclick="listarTarefasGrupo()">Listar tarefas do grupo</button>
-</div>
+      <div class="sidebar-content">
+        <!-- Config BaseURL -->
+        <div class="panel-section">
+          <h2>Conexão API</h2>
+          <label>URL do Backend</label>
+          <input id="baseUrl" value="http://localhost:8080" />
+        </div>
 
-<div class="card">
-  <h2>Log das requisições</h2>
-  <pre id="log">Aguardando ação...</pre>
-</div>
+        <!-- Autenticação -->
+        <div class="panel-section">
+          <h2>Autenticação</h2>
+          <label>Nome</label>
+          <input id="cadNome" placeholder="Guilherme" />
+          <label>Email</label>
+          <input id="cadEmail" placeholder="voce@exemplo.com" />
+          <label>Senha</label>
+          <input id="cadSenha" type="password" placeholder="••••••••" />
+          <button onclick="cadastrar()">Cadastrar</button>
 
-<script>
-function baseUrl() {
-  return document.getElementById('baseUrl').value.replace(/\/$/, '');
-}
+          <div
+            style="
+              margin-top: 10px;
+              border-top: 1px solid var(--border-color);
+              padding-top: 8px;
+            "
+          >
+            <label>Email Login</label>
+            <input id="loginEmail" placeholder="voce@exemplo.com" />
+            <label>Senha Login</label>
+            <input id="loginSenha" type="password" placeholder="••••••••" />
+            <button onclick="login()" class="secondary">Entrar (Cookie)</button>
+          </div>
 
-function log(titulo, dados) {
-  const el = document.getElementById('log');
-  const hora = new Date().toLocaleTimeString();
-  const corpo = typeof dados === 'string' ? dados : JSON.stringify(dados, null, 2);
-  el.textContent = `[${hora}] ${titulo}\n${corpo}\n\n` + el.textContent;
-}
+          <div style="display: flex; gap: 6px; margin-top: 8px">
+            <button class="secondary" onclick="verPerfil()">Perfil</button>
+            <button class="danger" onclick="logout()">Logout</button>
+          </div>
+        </div>
 
-async function chamar(path, options = {}) {
-  try {
-    const resp = await fetch(baseUrl() + path, {
-      credentials: 'include', // ESSENCIAL: manda/recebe o cookie httpOnly
-      headers: { 'Content-Type': 'application/json' },
-      ...options,
-    });
-    let corpo;
-    const texto = await resp.text();
-    try { corpo = texto ? JSON.parse(texto) : null; } catch { corpo = texto; }
+        <!-- Grupos -->
+        <div class="panel-section">
+          <h2>Grupos & Membros</h2>
+          <label>Nome do Grupo</label>
+          <input id="grupoNome" placeholder="Casa" />
+          <label>Descrição</label>
+          <input id="grupoDescricao" placeholder="Tarefas da casa" />
+          <button onclick="criarGrupo()">Criar Grupo</button>
 
-    log(`${options.method || 'GET'} ${path} → ${resp.status}`, corpo);
-    return { ok: resp.ok, status: resp.status, corpo };
-  } catch (erro) {
-    log(`ERRO em ${path}`, erro.message + '\n\nProvavelmente é CORS ou o backend não está rodando. Confira a URL acima e se o backend permite a origem desta página (CorsConfig.java).');
-    throw erro;
-  }
-}
+          <label style="margin-top: 10px">ID do Grupo (Contexto Board)</label>
+          <input
+            id="activeGrupoId"
+            placeholder="Ex: 1 (Vazio = Pessoais)"
+            onchange="atualizarVisualizacaoBoard()"
+          />
 
-function cadastrar() {
-  const nome = document.getElementById('cadNome').value;
-  const email = document.getElementById('cadEmail').value;
-  const senha = document.getElementById('cadSenha').value;
-  chamar('/api/usuarios', {
-    method: 'POST',
-    body: JSON.stringify({ nome, email, senha }),
-  });
-}
+          <div style="display: flex; gap: 6px; margin-top: 6px">
+            <button class="secondary" onclick="verMembros()">
+              Listar Membros
+            </button>
+          </div>
 
-function login() {
-  const email = document.getElementById('loginEmail').value;
-  const senha = document.getElementById('loginSenha').value;
-  chamar('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, senha }),
-  });
-}
+          <label>Adicionar Membro (ID User)</label>
+          <input id="addMembroUsuarioId" placeholder="2" />
+          <label>Papel</label>
+          <input id="addMembroPapel" placeholder="MEMBRO" />
+          <button class="secondary" onclick="adicionarMembro()">
+            Adicionar ao Grupo
+          </button>
+        </div>
 
-function verPerfil() {
-  chamar('/api/usuarios/perfil', { method: 'GET' });
-}
+        <!-- Deletar Tarefa -->
+        <div class="panel-section">
+          <h2>Gerenciar Tarefas</h2>
+          <label>ID da Tarefa para Deletar</label>
+          <input id="deletarTarefaId" placeholder="Ex: 5" />
+          <button class="danger" onclick="deletarTarefaPorIdInput()">
+            Deletar Tarefa
+          </button>
+        </div>
+      </div>
+    </aside>
 
-function logout() {
-  chamar('/api/auth/logout', { method: 'POST' });
-}
+    <!-- PAINEL PRINCIPAL (BOARD ESTILO TRELLO) -->
+    <main>
+      <header class="topbar">
+        <h2 id="boardTitle">Quadro de Tarefas Pessoais</h2>
+        <span class="badge-session" id="sessionBadge"
+          >Sessão via Cookie HttpOnly</span
+        >
+      </header>
 
-function criarGrupo() {
-  const nome = document.getElementById('grupoNome').value;
-  const descricao = document.getElementById('grupoDescricao').value;
-  chamar('/api/grupos', {
-    method: 'POST',
-    body: JSON.stringify({ nome, descricao }),
-  });
-}
+      <div class="board-container">
+        <!-- COLUNA 1: CRIAR TAREFA -->
+        <div class="column">
+          <div class="column-header">Nova Tarefa</div>
+          <div class="column-body">
+            <div class="task-card" style="background: #fff">
+              <label>Título</label>
+              <input id="tarefaTitulo" placeholder="Ex: Lavar louça" />
+              <label>Descrição</label>
+              <input id="tarefaDescricao" placeholder="Detalhes da tarefa..." />
+              <button onclick="criarTarefaBoard()">Adicionar Tarefa</button>
+            </div>
+          </div>
+        </div>
 
-function verMembros() {
-  const grupoId = document.getElementById('verMembrosGrupoId').value;
-  chamar(`/api/grupos/${grupoId}/membros`, { method: 'GET' });
-}
+        <!-- COLUNA 2: LISTA DE TAREFAS -->
+        <div class="column" style="flex: 1">
+          <div class="column-header">
+            <span>Tarefas Carregadas</span>
+            <div>
+              <button
+                class="secondary"
+                style="padding: 2px 8px; font-size: 11px; margin: 0"
+                onclick="carregarTarefas()"
+              >
+                Atualizar Lista
+              </button>
+            </div>
+          </div>
+          <div class="column-body" id="taskColumnBody" style="flex: 1">
+            <p style="padding: 12px; color: var(--text-muted); font-size: 13px">
+              Clique em "Atualizar Lista" ou crie uma tarefa para exibir aqui.
+            </p>
+          </div>
+        </div>
+      </div>
 
-function adicionarMembro() {
-  const grupoId = document.getElementById('addMembroGrupoId').value;
-  const usuarioId = Number(document.getElementById('addMembroUsuarioId').value);
-  const papel = document.getElementById('addMembroPapel').value || undefined;
-  chamar(`/api/grupos/${grupoId}/membros`, {
-    method: 'POST',
-    body: JSON.stringify({ usuarioId, papel }),
-  });
-}
+      <!-- CONSOLE LOG INFERIOR -->
+      <div class="console-wrapper">
+        <h3>Log das requisições da API</h3>
+        <pre id="log">Aguardando ação...</pre>
+      </div>
+    </main>
 
-function criarTarefa() {
-  const titulo = document.getElementById('tarefaTitulo').value;
-  const descricao = document.getElementById('tarefaDescricao').value;
-  const grupoIdRaw = document.getElementById('tarefaGrupoId').value;
-  const grupoId = grupoIdRaw ? Number(grupoIdRaw) : null;
-  chamar('/api/tarefas', {
-    method: 'POST',
-    body: JSON.stringify({ titulo, descricao, grupoId }),
-  });
-}
+    <script>
+      function baseUrl() {
+        return document.getElementById("baseUrl").value.replace(/\/$/, "");
+      }
 
-function listarTarefasPessoais() {
-  chamar('/api/tarefas/pessoais', { method: 'GET' });
-}
+      function log(titulo, dados) {
+        const el = document.getElementById("log");
+        const hora = new Date().toLocaleTimeString();
 
-function listarTarefasGrupo() {
-  const grupoId = document.getElementById('listarTarefasGrupoId').value;
-  chamar(`/api/tarefas/grupo/${grupoId}`, { method: 'GET' });
-}
-</script>
+        // Extrai apenas a mensagem amigável caso seja o JSON de erro padrão do Spring
+        let corpoExibicao = dados;
+        if (dados && typeof dados === "object" && dados.message) {
+          corpoExibicao = dados.message;
+        }
 
-</body>
+        const corpo =
+          typeof corpoExibicao === "string"
+            ? corpoExibicao
+            : JSON.stringify(corpoExibicao, null, 2);
+        el.textContent = `[${hora}] ${titulo}\n${corpo}\n\n` + el.textContent;
+      }
+
+      // CHAMADA À API PRESERVADA COM TRATAMENTO DE MENSAGENS PURAS
+      async function chamar(path, options = {}) {
+        try {
+          const resp = await fetch(baseUrl() + path, {
+            credentials: "include", // ESSENCIAL: manda/recebe o cookie httpOnly
+            headers: { "Content-Type": "application/json" },
+            ...options,
+          });
+          let corpo;
+          const texto = await resp.text();
+          try {
+            corpo = texto ? JSON.parse(texto) : null;
+          } catch {
+            corpo = texto;
+          }
+
+          log(`${options.method || "GET"} ${path} → ${resp.status}`, corpo);
+          return { ok: resp.ok, status: resp.status, corpo };
+        } catch (erro) {
+          log(
+            `ERRO em ${path}`,
+            erro.message +
+              "\n\nProvavelmente é CORS ou o backend não está rodando.",
+          );
+          throw erro;
+        }
+      }
+
+      function cadastrar() {
+        const nome = document.getElementById("cadNome").value;
+        const email = document.getElementById("cadEmail").value;
+        const senha = document.getElementById("cadSenha").value;
+        chamar("/api/usuarios", {
+          method: "POST",
+          body: JSON.stringify({ nome, email, senha }),
+        });
+      }
+
+      function login() {
+        const email = document.getElementById("loginEmail").value;
+        const senha = document.getElementById("loginSenha").value;
+        chamar("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email, senha }),
+        }).then((res) => {
+          if (res.ok) {
+            carregarTarefas();
+          }
+        });
+      }
+
+      function verPerfil() {
+        chamar("/api/usuarios/perfil", { method: "GET" });
+      }
+
+      function logout() {
+        chamar("/api/auth/logout", { method: "POST" });
+      }
+
+      function criarGrupo() {
+        const nome = document.getElementById("grupoNome").value;
+        const descricao = document.getElementById("grupoDescricao").value;
+        chamar("/api/grupos", {
+          method: "POST",
+          body: JSON.stringify({ nome, descricao }),
+        });
+      }
+
+      function verMembros() {
+        const grupoId = document.getElementById("activeGrupoId").value;
+        if (!grupoId)
+          return alert("Informe o ID do grupo na caixa correspondente.");
+        chamar(`/api/grupos/${grupoId}/membros`, { method: "GET" });
+      }
+
+      function adicionarMembro() {
+        const grupoId = document.getElementById("activeGrupoId").value;
+        const usuarioId = Number(
+          document.getElementById("addMembroUsuarioId").value,
+        );
+        const papel =
+          document.getElementById("addMembroPapel").value || undefined;
+        if (!grupoId) return alert("Informe o ID do grupo ativo.");
+        chamar(`/api/grupos/${grupoId}/membros`, {
+          method: "POST",
+          body: JSON.stringify({ usuarioId, papel }),
+        });
+      }
+
+      function criarTarefaBoard() {
+        const titulo = document.getElementById("tarefaTitulo").value;
+        const descricao = document.getElementById("tarefaDescricao").value;
+        const grupoIdRaw = document.getElementById("activeGrupoId").value;
+        const grupoId = grupoIdRaw ? Number(grupoIdRaw) : null;
+
+        if (!titulo) return alert("Informe o título da tarefa.");
+
+        chamar("/api/tarefas", {
+          method: "POST",
+          body: JSON.stringify({ titulo, descricao, grupoId }),
+        }).then((res) => {
+          if (res.ok) {
+            document.getElementById("tarefaTitulo").value = "";
+            document.getElementById("tarefaDescricao").value = "";
+            carregarTarefas();
+          }
+        });
+      }
+
+      function deletarTarefaPorIdInput() {
+        const id = document.getElementById("deletarTarefaId").value;
+        if (!id) return alert("Informe o ID da tarefa.");
+        deletarTarefa(id);
+      }
+
+      function deletarTarefa(id) {
+        if (!confirm(`Deseja realmente deletar a tarefa #${id}?`)) return;
+        chamar(`/api/tarefas/${id}`, { method: "DELETE" }).then((res) => {
+          if (res.ok) {
+            carregarTarefas();
+          }
+        });
+      }
+
+      function carregarTarefas() {
+        const grupoId = document.getElementById("activeGrupoId").value;
+        if (grupoId) {
+          document.getElementById("boardTitle").textContent =
+            `Quadro do Grupo #${grupoId}`;
+          chamar(`/api/tarefas/grupo/${grupoId}`, { method: "GET" }).then(
+            (res) => renderizarTarefas(res.corpo),
+          );
+        } else {
+          document.getElementById("boardTitle").textContent =
+            `Quadro de Tarefas Pessoais`;
+          chamar("/api/tarefas/pessoais", { method: "GET" }).then((res) =>
+            renderizarTarefas(res.corpo),
+          );
+        }
+      }
+
+      function atualizarVisualizacaoBoard() {
+        carregarTarefas();
+      }
+
+      function renderizarTarefas(dados) {
+        const container = document.getElementById("taskColumnBody");
+        container.innerHTML = "";
+
+        if (!Array.isArray(dados)) {
+          container.innerHTML = `<p style="padding: 12px; color: var(--text-muted); font-size: 13px;">Nenhuma tarefa encontrada ou dados inválidos.</p>`;
+          return;
+        }
+
+        if (dados.length === 0) {
+          container.innerHTML = `<p style="padding: 12px; color: var(--text-muted); font-size: 13px;">O quadro está vazio.</p>`;
+          return;
+        }
+
+        dados.forEach((tarefa) => {
+          const card = document.createElement("div");
+          card.className = "task-card";
+          card.innerHTML = `
+      <h4>📌 ${tarefa.titulo || "Sem título"}</h4>
+      <p>${tarefa.descricao || "Sem descrição"}</p>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+        ID: <b>${tarefa.id}</b> | Status: ${tarefa.concluida ? "✅ Concluída" : "⏳ Pendente"}
+      </div>
+      <button class="danger" style="margin-top: 4px; padding: 4px 8px; font-size: 11px;" onclick="deletarTarefa(${tarefa.id})">Excluir Tarefa</button>
+    `;
+          container.appendChild(card);
+        });
+      }
+    </script>
+  </body>
 </html>
