@@ -5,25 +5,24 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.migopan.api.dto.UsuarioRequestDTO;
-import com.migopan.api.dto.UsuarioResponseDTO;
-import com.migopan.api.dto.PerfilResponseDTO;
+import com.migopan.api.dto.UsuarioDTOs.*;
+import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.UsuarioRepository;
 
-import jakarta.transaction.Transactional;
-
 @Service
 public class UsuarioService {
+
     @Autowired
     private UsuarioRepository usuarioRepository;
-    
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> listarTodos() {
         List<Usuario> usuarios = usuarioRepository.findAll();
 
@@ -36,45 +35,78 @@ public class UsuarioService {
                 .toList();
     }
 
-    public buscarPerfilLogado(Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+    @Transactional(readOnly = true)
+    public UsuarioResponseDTO buscarPorId(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
         return new UsuarioResponseDTO(usuario);
     }
 
-    public buscarPerfilPublico(Long id) {
-        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+    @Transactional(readOnly = true)
+    public UsuarioResponseDTO buscarPerfilLogado(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+        return new UsuarioResponseDTO(usuario);
+    }
+
+    @Transactional(readOnly = true)
+    public PerfilResponseDTO buscarPerfilPublico(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
         return new PerfilResponseDTO(usuario);
     }
 
-    // Criar usuário
     @Transactional
-    public UsuarioResponseDTO criarUsuario(UsuarioRequestDTO dto){
-        if (usuarioRepository.existsByEmail(dto.getEmail())) {
+    public UsuarioResponseDTO criarUsuario(UsuarioRequestDTO dto) {
+        if (usuarioRepository.existsByEmail(dto.email())) {
             throw new IllegalArgumentException("Email já cadastrado.");
         }
 
         Usuario usuario = new Usuario();
-        usuario.setNome(dto.getNome());
-        usuario.setEmail(dto.getEmail());
-        usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
+        usuario.setNome(dto.nome());
+        usuario.setEmail(dto.email());
+        usuario.setSenhaHash(passwordEncoder.encode(dto.senha()));
         usuario.setEmailVerificado(false);
-        novoUsuario.setAtivo(true);
+        usuario.setAtivo(true);
 
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
         return new UsuarioResponseDTO(usuarioSalvo);
     }
 
-
-    // Atualizar usuário
     @Transactional
-    public UsuarioResponseDTO atualizarUsuario(Long id, UsuarioRequestDTO dto) {
-        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+    public UsuarioResponseDTO atualizarUsuario(Long id, Usuario usuarioLogado, AtualizarUsuarioRequestDTO dto) {
+        if (!id.equals(usuarioLogado.getId())) {
+            throw new AcessoNegadoException("Você não tem permissão para alterar este perfil.");
+        }
+
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+
+        if (dto.email() != null && !dto.email().isBlank() && !dto.email().equalsIgnoreCase(usuario.getEmail())) {
+            if (usuarioRepository.existsByEmail(dto.email())) {
+                throw new IllegalArgumentException("Email já está em uso por outra conta.");
+            }
+            usuario.setEmail(dto.email());
+        }
+
+        if (dto.nome() != null && !dto.nome().isBlank()) {
+            usuario.setNome(dto.nome());
+        }
+
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
         return new UsuarioResponseDTO(usuarioSalvo);
     }
 
+    @Transactional
+    public void deletarUsuario(Long id, Usuario usuarioLogado) {
+        if (!id.equals(usuarioLogado.getId())) {
+            throw new AcessoNegadoException("Você não tem permissão para deletar esta conta.");
+        }
 
-    // Deletar usuário
+        if (!usuarioRepository.existsById(id)) {
+            throw new NotFoundException("Usuário não encontrado.");
+        }
 
-
-
+        usuarioRepository.deleteById(id);
+    }
 }

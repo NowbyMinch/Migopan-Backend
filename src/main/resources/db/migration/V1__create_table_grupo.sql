@@ -1,4 +1,4 @@
-CREATE TABLE tb_groups (
+CREATE TABLE grupo (
     id BIGSERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL, 
     descricao TEXT,

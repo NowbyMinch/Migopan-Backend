@@ -1,6 +1,6 @@
 package com.migopan.api.controller;
 
-import com.migopan.api.dto.AtualizarMembroRequestDTO;
+import com.migopan.api.dto.GrupoMembroDTOs.*;
 
 import java.util.List;
 import jakarta.validation.Valid;
@@ -9,19 +9,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.migopan.api.dto.GrupoMembroRequestDTO;
-import com.migopan.api.dto.GrupoMembroResponseDTO;
 import com.migopan.api.service.GrupoMembroService;
 import com.migopan.api.model.Usuario;
 
@@ -39,23 +36,23 @@ public class GrupoMembroController {
     }
 
     @PostMapping("/{grupoId}/membros")
-    public ResponseEntity<String> adicionarMembro (
+    public ResponseEntity<GrupoMembroResponseDTO> adicionarMembro (
             @PathVariable Long grupoId, 
-            @AuthenticationPrincipal usuarioIdAdminLogado,
+            @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestBody @Valid GrupoMembroRequestDTO dto){
         
-        GrupoMembroResponseDTO novoMembro = grupoMembroService.adicionarMembro(grupoId, usuarioLogado.getId(), dto);
+        GrupoMembroResponseDTO novoMembro = grupoMembroService.adicionarMembro(grupoId, usuarioLogado, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoMembro);
     }
 
     @PatchMapping("/{grupoId}/membros/{usuarioIdMembro}")
-    public ResponseEntity<String> atualizarMembro(
+    public ResponseEntity<GrupoMembroResponseDTO> atualizarMembro(
             @PathVariable Long grupoId,
             @PathVariable Long usuarioIdMembro,
             @AuthenticationPrincipal Usuario usuario,
             @RequestBody @Valid AtualizarMembroRequestDTO dto){
             
-        String mensagem = grupoMembroService.atualizarMembro(grupoId, usuario.getId(), usuarioIdMembro, dto)
+        GrupoMembroResponseDTO mensagem = grupoMembroService.atualizarMembro(grupoId, usuario.getId(), usuarioIdMembro, dto);
         return ResponseEntity.ok(mensagem);
     }
 
