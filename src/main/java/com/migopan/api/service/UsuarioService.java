@@ -37,12 +37,12 @@ public class UsuarioService {
     }
 
     public buscarPerfilLogado(Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> throw new NotFoundException("Usuário não encontrado."));
+        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
         return new UsuarioResponseDTO(usuario);
     }
 
     public buscarPerfilPublico(Long id) {
-        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> throw new NotFoundException("Usuário não encontrado."));
+        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
         return new PerfilResponseDTO(usuario);
     }
 
@@ -68,9 +68,7 @@ public class UsuarioService {
     // Atualizar usuário
     @Transactional
     public UsuarioResponseDTO atualizarUsuario(Long id, UsuarioRequestDTO dto) {
-        Usuario usuario = usuarioRepository.findById(id);
-
-
+        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
         return new UsuarioResponseDTO(usuarioSalvo);
     }
 
