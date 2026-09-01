@@ -165,7 +165,7 @@ public class TarefaService {
         validarAcessoTarefa(tarefa, usuarioLogado);
 
         tarefaRepository.delete(tarefa);
-        return "Tarefa removida com sucesso.";
+        return ResponseEntity.ok().build();
     }
     
 }

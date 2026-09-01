@@ -93,7 +93,7 @@ public class GrupoMembroService {
         }
 
         grupoMembroRepository.deleteById(id);
-        return "Membro removido com sucesso.";
+        return ResponseEntity.ok().build();
     }
 
     @Transactional
