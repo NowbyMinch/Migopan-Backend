@@ -52,19 +52,18 @@ public class GrupoMembroController {
             @AuthenticationPrincipal Usuario usuario,
             @RequestBody @Valid AtualizarMembroRequestDTO dto){
             
-        GrupoMembroResponseDTO mensagem = grupoMembroService.atualizarMembro(grupoId, usuario.getId(), usuarioIdMembro, dto);
-        return ResponseEntity.ok(mensagem);
+        GrupoMembroResponseDTO response = grupoMembroService.atualizarMembro(grupoId, usuario.getId(), usuarioIdMembro, dto);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{grupoId}/membros/{usuarioIdMembro}")
-    public ResponseEntity<String> removerMembro(
+    public ResponseEntity<Void> removerMembro(
             @PathVariable Long grupoId, 
             @AuthenticationPrincipal Usuario usuarioLogado,
             @PathVariable Long usuarioIdMembro) {
 
-        String mensagem = grupoMembroService.removerMembro(grupoId, usuarioLogado.getId(), usuarioIdMembro);
-
-        return ResponseEntity.ok(mensagem);
+        grupoMembroService.removerMembro(grupoId, usuarioLogado.getId(), usuarioIdMembro);
+        return ResponseEntity.ok().build();
     }
 
 }

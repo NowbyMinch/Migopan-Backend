@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.migopan.api.dto.TarefaDTOs.AtualizarTarefaRequestDTO;
@@ -158,14 +159,13 @@ public class TarefaService {
     }
     
     @Transactional 
-    public String deletarTarefa(Long tarefaId, Usuario usuarioLogado) {
+    public void deletarTarefa(Long tarefaId, Usuario usuarioLogado) {
         Tarefa tarefa = tarefaRepository.findById(tarefaId)
                 .orElseThrow(() -> new NotFoundException("Tarefa não encontrada."));
 
         validarAcessoTarefa(tarefa, usuarioLogado);
 
         tarefaRepository.delete(tarefa);
-        return ResponseEntity.ok().build();
     }
     
 }

@@ -61,9 +61,9 @@ public class TarefaController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletar(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
-        String mensagem = tarefaService.deletarTarefa(id, usuarioLogado);
-        return ResponseEntity.ok(mensagem);
+    public ResponseEntity<Void> deletar(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
+        tarefaService.deletarTarefa(id, usuarioLogado);
+        return ResponseEntity.ok(null);
     }
 
 }

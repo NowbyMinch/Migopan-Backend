@@ -1,11 +1,14 @@
 package com.migopan.api.dto;
 
-import com.migopan.api.model.Grupo;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 
-public class ListaAmigos {
-    // @Pattern(regexp = "ADMIN|MEMBRO", message = "O papel deve ser 'ADMIN' ou 'MEMBRO'")
+import com.migopan.api.model.ListaAmigos; // Import correto da entidade
+import com.migopan.api.model.Usuario;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
+public class ListaAmigosDTOs {
 
     public record AtualizarStatusAmizadeRequestDTO(
         @NotBlank(message = "O status é obrigatório")
@@ -13,14 +16,13 @@ public class ListaAmigos {
         String status
     ) {}
 
-
     public record UsuarioAmigoResponseDTO(
         Long id,
-        String nome,
+        String nome
     ) {
         public UsuarioAmigoResponseDTO(Usuario usuario) {
             this(usuario.getId(), usuario.getNome());
-        };
+        }
     }
 
     public record AmizadeResponseDTO(
@@ -29,18 +31,18 @@ public class ListaAmigos {
         String statusAmizade,
         LocalDateTime dataAmizade
     ) {
-        public AmizadeResponseDTO(ListaAmigos relacao, Long usuarioLogadoId){
-            boolean souOuvinte = relacao.getUsuario().getId().equals(usuarioId);
-            Usuario outroUsuario = souOuvinte ? relacao.getAmigo() : relacao.getUsuario(); 
-
-            this (
+        // Recebe a ENTIDADE ListaAmigos, não o DTO
+        public AmizadeResponseDTO(ListaAmigos relacao, Long usuarioLogadoId) {
+            this(
                 usuarioLogadoId,
-                new UsuarioAmigoResponseDTO(outroUsuario),
+                new UsuarioAmigoResponseDTO(
+                    relacao.getUsuario().getId().equals(usuarioLogadoId) 
+                        ? relacao.getAmigo() 
+                        : relacao.getUsuario()
+                ),
                 relacao.getStatusAmizade(),
                 relacao.getDataAmizade()
             );
-        } 
-
+        }
     }
-
 }

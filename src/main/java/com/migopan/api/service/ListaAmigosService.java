@@ -1,19 +1,25 @@
 package com.migopan.api.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.migopan.api.dto.ListaAmigosDTOs.*;
 import com.migopan.api.dto.GrupoDTOs.*;
 import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
+import com.migopan.api.model.ListaAmigos;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.model.keys.GrupoMembroId;
+import com.migopan.api.model.keys.ListaAmigosId;
 import com.migopan.api.repository.GrupoMembroRepository;
 import com.migopan.api.repository.GrupoRepository;
+import com.migopan.api.repository.ListaAmigosRepository;
 import com.migopan.api.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
@@ -68,16 +74,16 @@ public class ListaAmigosService{
         listaAmigosRepository.save(relacao);
     }
 
-    public List<ListaAmigos> listarAmigos(Long usuarioId) {
-        return ListaAmigosRepository.findAmizadesAceitas(usuarioId);
+    public List<AmizadeResponseDTO> listarAmigos(Long usuarioId) {
+        return listaAmigosRepository.findAmizadesAceitas(usuarioId);
     }
 
-    public List<ListaAmigos> listarSolicitacoesRecebidas(Long usuarioId) {
-        return ListaAmigosRepository.findSolicitacoesPendentesRecebidas(usuarioId);
+    public List<AmizadeResponseDTO> listarSolicitacoesRecebidas(Long usuarioId) {
+        return listaAmigosRepository.findSolicitacoesPendentesRecebidas(usuarioId);
     }
 
-    public List<ListaAmigos> listarSolicitacoesEnviadas(Long usuarioId) {
-        return ListaAmigosRepository.findSolicitacoesPendentesEnviadas(usuarioId);
+    public List<AmizadeResponseDTO> listarSolicitacoesEnviadas(Long usuarioId) {
+        return listaAmigosRepository.findSolicitacoesPendentesEnviadas(usuarioId);
     }
 
     @Transactional 

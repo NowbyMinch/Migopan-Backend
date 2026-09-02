@@ -82,7 +82,7 @@ public class GrupoMembroService {
     }
 
     @Transactional
-    public String removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {
+    public void removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {
         if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
             throw new AcessoNegadoException("Apenas administradores podem remover membros.");
         }
@@ -93,7 +93,6 @@ public class GrupoMembroService {
         }
 
         grupoMembroRepository.deleteById(id);
-        return ResponseEntity.ok().build();
     }
 
     @Transactional
@@ -106,12 +105,10 @@ public class GrupoMembroService {
         GrupoMembro grupoMembro = grupoMembroRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não é membro do grupo."));
 
-        // Atualiza o status de bloqueio se foi enviado
         if (dto.bloqueado() != null) {
             grupoMembro.setBloqueado(dto.bloqueado());
         }
 
-        // Se você quiser permitir atualizar o papel também de forma controlada, pode adicionar aqui:
         if (dto.papel() != null && !dto.papel().isBlank()) {
             grupoMembro.setPapel(dto.papel());
         }

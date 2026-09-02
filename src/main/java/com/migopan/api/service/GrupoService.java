@@ -22,7 +22,7 @@ import jakarta.transaction.Transactional;
 public class GrupoService {
     
     @Autowired
-    private Gru poRepository grupoRepository;
+    private GrupoRepository grupoRepository;
 
     @Autowired
     private UsuarioRepository usuarioRepository;

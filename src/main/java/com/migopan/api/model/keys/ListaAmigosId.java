@@ -1,4 +1,4 @@
-package com.seuapp.model.keys;
+package com.migopan.api.model.keys;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @EqualsAndHashCode
-public ListaAmigosId implements Serializable{
+public class ListaAmigosId implements Serializable{
     private Long usuario;
     private Long amigo;
 }

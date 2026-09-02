@@ -1,6 +1,6 @@
-package com.seuapp.model;
+package com.migopan.api.model;
 
-import com.seuapp.model.keys.ListaAmigosId;
+import com.migopan.api.model.keys.ListaAmigosId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
