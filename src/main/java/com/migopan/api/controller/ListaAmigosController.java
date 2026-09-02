@@ -72,7 +72,4 @@ public class ListaAmigosController {
         return ResponseEntity.ok().build();
     }
     
-
-    // Só continuar o controller, os DTOs estão prontos
-
 }

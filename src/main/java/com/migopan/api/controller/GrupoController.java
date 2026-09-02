@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import com.migopan.api.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class GrupoController {
         List<GrupoResponseDTO> grupos = grupoService.listarTodos();
         
         if (grupos.isEmpty()) {
-            return ResponseEntity.ok(Map.of("message", "Nenhum grupo encontrado."));
+            throw new NotFoundException("Nenhum grupo encontrado.");            
         }
 
         return ResponseEntity.ok(grupos);
