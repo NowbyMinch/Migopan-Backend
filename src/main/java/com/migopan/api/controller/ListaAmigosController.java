@@ -3,7 +3,9 @@ package com.migopan.api.controller;
 import com.migopan.api.dto.ListaAmigosDTOs.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.validation.Valid;
+import com.migopan.api.dto.UsuarioDTOs.PerfilResponseDTO; // <-- Adicione esta linha
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,15 @@ import com.migopan.api.service.ListaAmigosService;
 public class ListaAmigosController {
     @Autowired
     private ListaAmigosService listaAmigosService;
+
+    @PostMapping("/pesquisar")
+    public ResponseEntity<List<PerfilResponseDTO>> pesquisarUsuarios(
+            @RequestParam String nome, 
+            @AuthenticationPrincipal Usuario usuario) {
+
+        List<PerfilResponseDTO> usuarios = listaAmigosService.pesquisarUsuariosParaAdicionar(nome, usuario);
+        return ResponseEntity.ok(usuarios);
+    }
 
     // enviarSolicitacao
     @PostMapping("/solicitar/{amigoId}")

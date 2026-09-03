@@ -3,10 +3,11 @@ package com.migopan.api.controller;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.UsuarioRepository;
 import com.migopan.api.security.JwtService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -31,28 +32,35 @@ public class AuthController {
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
         if (usuario == null || !passwordEncoder.matches(senha, usuario.getSenhaHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"));
-        }
+        }   
 
         String token = jwtService.gerarToken(usuario.getEmail());
 
-        Cookie cookie = new Cookie("token", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); 
-        cookie.setPath("/");
-        cookie.setMaxAge(86400); // 1 dia 
-        response.addCookie(cookie);
+        // Uso profissional do ResponseCookie compatível com ambientes desacoplados
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+                .httpOnly(true)
+                .secure(false) // Mude para true apenas se sua aplicação estiver em HTTPS em produção
+                .path("/")
+                .maxAge(86400) // 1 dia
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso"));
     }
 
     @PostMapping("/logout") 
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("token", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0) // Expira e remove o cookie do navegador imediatamente
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok(Map.of("message", "Logout realizado com sucesso"));
     }

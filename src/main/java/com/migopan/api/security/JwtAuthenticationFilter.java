@@ -2,6 +2,7 @@ package com.migopan.api.security;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Collections;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -46,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (usuario != null) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        usuario, null, null);
+                        usuario, null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

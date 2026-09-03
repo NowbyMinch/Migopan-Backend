@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.migopan.api.dto.UsuarioDTOs.*;
 import com.migopan.api.dto.ListaAmigosDTOs.*;
 import com.migopan.api.dto.GrupoDTOs.*;
 import com.migopan.api.exception.AcessoNegadoException;
@@ -32,6 +33,11 @@ public class ListaAmigosService{
     @Autowired
     private UsuarioRepository usuarioRepository;
     
+    public List<PerfilResponseDTO> pesquisarUsuariosParaAdicionar(String nome, Long usuarioLogadoId){
+        List<Usuario> usuarios = usuarioRepository.findByNomeContainingIgnoreCaseAndIdNot(nome, usuarioLogadoId);
+        return usuarios.stream().map(PerfilResponseDTO::new).toList();
+    };
+
     @Transactional 
     public void enviarSolicitacao(Long usuarioId, Long amigoId){
         if (usuarioId.equals(amigoId)) {
