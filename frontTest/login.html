@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migopan - Entrar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        migopanDark: '#0b0b16',
+                        migopanCard: '#131324',
+                        migopanCardBorder: '#292557',
+                        migopanPurple: '#6d28d9',
+                        migopanPurpleHover: '#5b21b6',
+                        migopanInput: '#1b1b36',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-migopanDark text-white min-h-screen flex items-center justify-center font-sans p-4">
+
+    <div class="bg-migopanCard border border-migopanCardBorder rounded-3xl p-8 w-full max-w-md shadow-2xl relative">
+        <!-- Logo e Cabeçalho -->
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 bg-orange-600 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg border-2 border-orange-400 mx-auto mb-3">
+                🐼
+            </div>
+            <h1 class="text-2xl font-bold">Bem-vindo de volta!</h1>
+            <p class="text-xs text-gray-400 mt-1">Entre para acessar suas tarefas e sua comunidade.</p>
+        </div>
+
+        <!-- Mensagem de Erro (Oculta por padrão) -->
+        <div id="erroMsg" class="hidden bg-red-950/50 border border-red-800 text-red-300 text-xs p-3 rounded-xl mb-4 text-center">
+            E-mail ou senha incorretos.
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="formLogin" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">E-mail</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                        <i class="fa-regular fa-envelope text-xs"></i>
+                    </span>
+                    <input type="email" id="email" required placeholder="seu@email.com"
+                        class="w-full bg-migopanInput border border-migopanCardBorder rounded-xl py-2.5 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-purple-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">Senha</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                        <i class="fa-solid fa-lock text-xs"></i>
+                    </span>
+                    <input type="password" id="senha" required placeholder="••••••••"
+                        class="w-full bg-migopanInput border border-migopanCardBorder rounded-xl py-2.5 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-purple-500">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-migopanPurple hover:bg-migopanPurpleHover text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-purple-900/30 text-sm mt-2">
+                Entrar
+            </button>
+        </form>
+
+        <!-- Link para Cadastro -->
+        <p class="text-center text-xs text-gray-400 mt-6">
+            Ainda não tem uma conta? 
+            <a href="cadastro.html" class="text-purple-400 font-semibold hover:underline">Cadastre-se</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const erroDiv = document.getElementById('erroMsg');
+
+            erroDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8080/api/auth/login', {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                if (response.ok) {
+                    // Login com sucesso, redireciona para a home de tarefas
+                    window.location.href = 'home.html';
+                } else {
+                    erroDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Erro de rede:', error);
+                erroDiv.textContent = 'Erro de conexão com o servidor.';
+                erroDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
