@@ -34,7 +34,7 @@ public class ListaAmigosService{
     private UsuarioRepository usuarioRepository;
     
     public List<PerfilResponseDTO> pesquisarUsuariosParaAdicionar(String nome, Long usuarioLogadoId){
-        List<Usuario> usuarios = usuarioRepository.findByNomeContainingIgnoreCaseAndIdNot(nome, usuarioLogadoId);
+        List<Usuario> usuarios = usuarioRepository.buscarPorNomeExcluindoUsuarioLogado(nome, usuarioLogadoId);
         return usuarios.stream().map(PerfilResponseDTO::new).toList();
     };
 

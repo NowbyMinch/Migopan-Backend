@@ -35,7 +35,7 @@ public class ListaAmigosController {
             @RequestParam String nome, 
             @AuthenticationPrincipal Usuario usuario) {
 
-        List<PerfilResponseDTO> usuarios = listaAmigosService.pesquisarUsuariosParaAdicionar(nome, usuario);
+        List<PerfilResponseDTO> usuarios = listaAmigosService.pesquisarUsuariosParaAdicionar(nome, usuario.getId());
         return ResponseEntity.ok(usuarios);
     }
 

@@ -15,7 +15,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
     boolean existsByEmail(String email);
     @Query("SELECT u FROM Usuario u WHERE LOWER(u.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND u.id != :usuarioLogadoId")
-    List<PerfilResponseDTO> buscarPorNomeExcluindoUsuarioLogado(
+    List<Usuario> buscarPorNomeExcluindoUsuarioLogado(
         @Param("nome") String nome,
         @Param("usuarioLogadoId") Long UsuarioLogadoId
     );
