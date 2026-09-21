@@ -17,6 +17,7 @@ import com.migopan.api.model.Grupo;
 import com.migopan.api.model.Tarefa;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.repository.GrupoMembroRepository;
+import com.migopan.api.repository.UsuarioRepository;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.repository.TarefaRepository;
 
@@ -29,6 +30,9 @@ public class TarefaService {
     
     @Autowired
     public GrupoRepository grupoRepository;
+    
+    @Autowired
+    public UsuarioRepository usuarioRepository;
     
     @Autowired
     public GrupoMembroRepository grupoMembroRepository;
@@ -76,7 +80,12 @@ public class TarefaService {
     }
     
     public List<TarefaResponseDTO> listarTarefasPessoais(Usuario usuarioLogado, Boolean concluida) {
+        if (usuarioLogado == null || !usuarioRepository.existsById(usuarioLogado.getId())) {
+            throw new NotFoundException("Usuário não existe.");            
+        }   
+
         List<Tarefa> tarefas;
+
 
         if (concluida != null) {
             tarefas = tarefaRepository.findByUsuarioAtribuidoIdAndConcluida(usuarioLogado.getId(), concluida);

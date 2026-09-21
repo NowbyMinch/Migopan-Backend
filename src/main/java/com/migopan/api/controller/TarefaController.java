@@ -14,8 +14,6 @@ import com.migopan.api.service.TarefaService;
 
 import jakarta.validation.Valid;
 
-
-
 @RestController
 @RequestMapping("/api/tarefas")
 public class TarefaController {

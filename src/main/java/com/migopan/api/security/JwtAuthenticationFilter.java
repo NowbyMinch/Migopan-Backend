@@ -1,7 +1,6 @@
 package com.migopan.api.security;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.Collections;
 
 import jakarta.servlet.FilterChain;
@@ -27,20 +26,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        // 1. Libera requisições OPTIONS (Preflight CORS)
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return true;
+        }
+
+        // 2. Libera rotas públicas para não passar pela validação de JWT
+        if ("POST".equalsIgnoreCase(method) && 
+           (path.equals("/api/usuarios/criar") || path.equals("/api/usuarios"))) {
+            return true;
+        }
+
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
 
-        // pegar o token do cookie 
+        // Pegar o token do cookie 
         String token = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("token".equals(cookie.getName())) {
                     token = cookie.getValue();
+                    break;
                 }
             }
         }
 
-        // pegar o usuário do token 
+        // Pegar o usuário do token 
         if (token != null && jwtService.validarToken(token)) {
             String email = jwtService.extrairEmail(token);
             Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
@@ -54,5 +77,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         filterChain.doFilter(request, response);
     }
-
 }

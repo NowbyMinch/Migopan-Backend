@@ -34,14 +34,24 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-            .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
-            .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
-            .requestMatchers("/api/**").authenticated()
-            .anyRequest().denyAll() 
+                // 1. OBRIGATÓRIO: Libera requisições OPTIONS do CORS pré-flight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                
+                // 2. Corrigida a rota de criação para aceitar /api/usuarios/criar
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/criar").permitAll()
+                
+                // Se quiser permitir também a rota padrão /api/usuarios caso varie o controller:
+                .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+                
+                // 3. Demais rotas públicas
+                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                
+                // 4. Exige token/autenticação para todo o restante da API
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().denyAll() 
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     } 
-
 }
