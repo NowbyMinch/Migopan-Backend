@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
                 
                 // 3. Demais rotas públicas
-                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/me").permitAll()
                 
                 // 4. Exige token/autenticação para todo o restante da API
                 .requestMatchers("/api/**").authenticated()

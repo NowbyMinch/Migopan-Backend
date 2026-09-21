@@ -7,12 +7,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,6 +25,29 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
+
+    @GetMapping("/me")
+    public ResponseEntity<?> checkAuth(@CookieValue(name = "token", required = false) String token) { 
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("authenticated", false, "message", "Token não encontrado"));
+        }
+        
+        if (!jwtService.validarToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("authenticated", false, "message", "Token inválido"));
+        }
+
+        String email = jwtService.extrairEmail(token);
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("authenticated", false, "message", "Usuário não encontrado"));
+        }
+
+        return ResponseEntity.ok(Map.of("authenticated", true, "id", usuario.getId(), "email", email, "nome", usuario.getNome()));
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpServletResponse response){
