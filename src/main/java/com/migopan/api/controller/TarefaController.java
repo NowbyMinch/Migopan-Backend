@@ -52,7 +52,7 @@ public class TarefaController {
     @PatchMapping("/{id}")
     public ResponseEntity<TarefaResponseDTO> atualizar(
             @PathVariable Long id,
-            @AuthenticationPrincipal Usuario usuarioLogado,
+            @AuthenticationPrincipal Usuario usuarioLogado, 
             @RequestBody @Valid AtualizarTarefaRequestDTO dto) {
         TarefaResponseDTO tarefa = tarefaService.atualizarTarefa(id, usuarioLogado, dto);
         return ResponseEntity.ok(tarefa);

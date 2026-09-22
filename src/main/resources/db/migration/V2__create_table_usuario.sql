@@ -4,7 +4,7 @@ CREATE TABLE usuario (
     email VARCHAR(150) NOT NULL UNIQUE, 
     email_verificado BOOLEAN NOT NULL DEFAULT false, 
     senha_hash VARCHAR(255) NOT NULL,
-    streak INTEGER NOT NULL DEFAULT 0,
+    sequencia_dias INTEGER NOT NULL DEFAULT 0,
     dinheiro NUMERIC(12,2) NOT NULL DEFAULT 0,
     data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ativo BOOLEAN NOT NULL DEFAULT true

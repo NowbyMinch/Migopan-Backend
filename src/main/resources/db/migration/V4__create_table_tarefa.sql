@@ -5,14 +5,20 @@ CREATE TABLE tarefa (
     grupo_id BIGINT REFERENCES grupo(id) ON DELETE CASCADE,
     titulo VARCHAR(150) NOT NULL,
     descricao TEXT,
-    repeticao VARCHAR(20) NOT NULL DEFAULT 'NENHUMA', -- NENHUMA, DIARIA, SEMANAL, MENSAL
     horario_resolucao TIME,
     data_criacao TIMESTAMP NOT NULL DEFAULT now(),
     data_resolucao TIMESTAMP,
     concluida BOOLEAN NOT NULL DEFAULT false,
-    -- Tarefa é OU pessoal (tem usuario_atribuido, não tem grupo) OU de grupo
-    -- (tem grupo, não tem usuario_atribuido — vale para todos os membros, com
-    -- uma única conclusão compartilhada)
+
+    categoria VARCHAR(50),
+    cor VARCHAR(20),
+    prioridade BOOLEAN NOT NULL DEFAULT false,
+    
+    repeticao VARCHAR(20) NOT NULL DEFAULT 'NENHUMA', -- NENHUMA, DIARIA, SEMANAL, MENSAL
+
+    data_limite DATE,
+    horario_limite TIME,
+
     CONSTRAINT chk_tarefa_repeticao CHECK (
         repeticao IN ('NENHUMA','DIARIA','SEMANAL','MENSAL')
     ),
@@ -26,5 +32,4 @@ CREATE TABLE tarefa (
 CREATE INDEX idx_tarefa_grupo ON tarefa(grupo_id);
 CREATE INDEX idx_tarefa_atribuido ON tarefa(usuario_atribuido_id);
 CREATE INDEX idx_tarefa_criador ON tarefa(usuario_criador_id);
-
-
+CREATE INDEX idx_tarefa_prioridade ON tarefa(prioridade);

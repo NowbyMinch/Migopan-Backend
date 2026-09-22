@@ -56,6 +56,13 @@ public class TarefaService {
         Tarefa tarefa = new Tarefa();
         tarefa.setTitulo(dto.titulo());
         tarefa.setDescricao(dto.descricao());
+        
+        tarefa.setCategoria(dto.categoria());
+        tarefa.setCor(dto.cor());
+        tarefa.setPrioridade(dto.prioridade() != null ? dto.prioridade() : false);
+        tarefa.setDataLimite(dto.dataLimite());
+        tarefa.setHorarioLimite(dto.horarioLimite());
+        
         tarefa.setRepeticao(dto.repeticao() != null && !dto.repeticao().isBlank() ? dto.repeticao() : "NENHUMA");
         tarefa.setUsuarioCriador(usuarioLogado);
         tarefa.setConcluida(false);
@@ -161,6 +168,18 @@ public class TarefaService {
         }
         if (dto.repeticao() != null && !dto.repeticao().isBlank()) {
             tarefa.setRepeticao(dto.repeticao());
+        }
+        if (dto.categoria() != null) {
+            tarefa.setCategoria(dto.categoria());
+        }
+        if (dto.cor() != null) {
+            tarefa.setCor(dto.cor());
+        }
+        if (dto.dataLimite() != null) {
+            tarefa.setDataLimite(dto.dataLimite());
+        }
+        if (dto.horarioLimite() != null) {
+            tarefa.setHorarioLimite(dto.horarioLimite());
         }
 
         Tarefa salva = tarefaRepository.save(tarefa);

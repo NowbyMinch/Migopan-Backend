@@ -52,7 +52,7 @@ public class UsuarioDTOs {
         String email,
         Boolean emailVerificado,
         Boolean ativo,
-        Integer streak,
+        Integer sequenciaDias,
         BigDecimal dinheiro
     ) {
         public UsuarioResponseDTO(Usuario usuario) {
@@ -62,7 +62,7 @@ public class UsuarioDTOs {
                 usuario.getEmail(),
                 usuario.getEmailVerificado(),
                 usuario.getAtivo(),
-                usuario.getStreak(),
+                usuario.getSequenciaDias(),
                 usuario.getDinheiro()
             );
         }

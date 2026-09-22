@@ -50,6 +50,10 @@ public class GrupoService {
         Grupo grupo = new Grupo();
         grupo.setNome(dto.nome());
         grupo.setDescricao(dto.descricao());
+        
+        grupo.setNivel(1);
+        grupo.setSequenciaDias(0);
+
         Grupo grupoSalvo = grupoRepository.save(grupo);
 
         GrupoMembroId id = new GrupoMembroId(grupoSalvo.getId(), usuarioLogado.getId());

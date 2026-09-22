@@ -1,5 +1,6 @@
 package com.migopan.api.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -24,7 +25,7 @@ import lombok.Setter;
 public class Tarefa {
     
     @Id
-    @GeneratedValue( strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -46,9 +47,25 @@ public class Tarefa {
     @Column(columnDefinition = "TEXT")
     private String descricao;
     
+    // Novos campos adicionados
+    @Column(length = 50)
+    private String categoria;
+
+    @Column(name = "cor", length = 20)
+    private String cor;
+
+    @Column(nullable = false)
+    private Boolean prioridade = false; // Marcar como prioridade (estrela)
+
     @Column(nullable = false, length = 20)
     private String repeticao = "NENHUMA";
     
+    @Column(name = "data_limite")
+    private LocalDate dataLimite;
+
+    @Column(name = "horario_limite")
+    private LocalTime horarioLimite;
+
     @Column(name = "horario_resolucao")
     private LocalTime horarioResolucao;
     
@@ -60,5 +77,4 @@ public class Tarefa {
     
     @Column(nullable = false)
     private Boolean concluida = false;
-
 }

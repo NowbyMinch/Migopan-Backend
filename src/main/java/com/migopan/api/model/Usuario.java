@@ -35,8 +35,8 @@ public class Usuario{
     @Column(nullable = false, name = "senha_hash")
     private String senhaHash;
 
-    @Column(nullable = false)
-    private Integer streak = 0;
+    @Column(name = "sequencia_dias", nullable = false)
+    private Integer sequenciaDias = 0;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal dinheiro = BigDecimal.ZERO;

@@ -3,5 +3,7 @@ CREATE TABLE grupo (
     nome VARCHAR(100) NOT NULL, 
     descricao TEXT,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    nivel INT NOT NULL DEFAULT 1,
+    sequencia_dias INT NOT NULL DEFAULT 0,
     data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
