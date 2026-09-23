@@ -75,20 +75,17 @@ public class GrupoService {
             throw new AcessoNegadoException("Apenas administradores podem editar o grupo.");
         }
 
-       boolean atualizarNome = (dto.nome() != null && !dto.nome().isBlank());
-        boolean atualizarDescricao = (dto.descricao() != null);
-
-        if (!atualizarNome && !atualizarDescricao) {
+        if (dto.nome() == null || dto.nome().isBlank() && dto.descricao() == null) {
             throw new IllegalArgumentException("Nenhum dado foi fornecido para atualização.");
         }
 
         Grupo grupo = grupoRepository.findById(grupoId)
                 .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
 
-        if (atualizarNome) { 
+        if (dto.nome() != null && !dto.nome().isBlank()) { 
             grupo.setNome(dto.nome());
         }
-        if (atualizarDescricao) { 
+        if (dto.descricao() != null) { 
             grupo.setDescricao(dto.descricao());
         }
 
