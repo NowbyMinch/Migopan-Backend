@@ -22,6 +22,7 @@ public class GrupoDTOs {
     ) {}
 
     public record GrupoResponseDTO(
+        Long id,
         String nome,
         String descricao,
         Long quantidadeMembros,
@@ -31,6 +32,7 @@ public class GrupoDTOs {
     ) {
         public GrupoResponseDTO(Grupo grupo) {
             this(
+                grupo.getId(),
                 grupo.getNome(),
                 grupo.getDescricao(),
                 1L,
@@ -42,6 +44,7 @@ public class GrupoDTOs {
 
         public GrupoResponseDTO(Grupo grupo, Long quantidadeMembros) {
             this(
+                grupo.getId(),
                 grupo.getNome(),
                 grupo.getDescricao(),
                 quantidadeMembros != null ? quantidadeMembros : 1L,
