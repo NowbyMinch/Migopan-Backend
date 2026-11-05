@@ -123,6 +123,18 @@ public class TarefaService {
         return tarefas.stream().map(TarefaResponseDTO::new).toList();
     }
 
+    public long contarTarefasPorGrupo(Long grupoId, Usuario usuarioLogado) {
+        if (!grupoRepository.existsById(grupoId)) {
+            throw new NotFoundException("Grupo não encontrado.");
+        }
+
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioLogado.getId())) {
+            throw new AcessoNegadoException("Você não tem acesso aos dados deste grupo.");
+        }
+        
+        return tarefaRepository.countByGrupoId(grupoId);
+    }
+
     public TarefaResponseDTO buscarPorId(Long tarefaId, Usuario usuarioLogado) {
         Tarefa tarefa = tarefaRepository.findById(tarefaId)
                 .orElseThrow(() -> new NotFoundException("Tarefa não encontrada."));

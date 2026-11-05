@@ -13,6 +13,7 @@ import com.migopan.api.model.GrupoMembro;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.model.keys.GrupoMembroId;
 import com.migopan.api.repository.GrupoMembroRepository;
+import com.migopan.api.repository.TarefaRepository;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.repository.UsuarioRepository;
 
@@ -30,6 +31,9 @@ public class GrupoService {
     @Autowired
     private GrupoMembroRepository grupoMembroRepository;
 
+    @Autowired 
+    private TarefaRepository tarefaRepository; 
+
     public List<GrupoResponseDTO> getGruposDoUsuario(Long usuarioId) {
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new NotFoundException("Usuário não encontrado.");
@@ -38,7 +42,8 @@ public class GrupoService {
         List<Grupo> grupos = grupoMembroRepository.findGruposByUsuarioId(usuarioId);
         return grupos.stream().map(grupo -> {
             long qtd = grupoMembroRepository.countByGrupoId(grupo.getId());
-            return new GrupoResponseDTO(grupo, qtd);
+            long atv = tarefaRepository.countByGrupoId(grupo.getId());
+            return new GrupoResponseDTO(grupo, qtd, atv);
         }).toList();
     }
 
@@ -66,7 +71,7 @@ public class GrupoService {
 
         grupoMembroRepository.save(membro);
 
-        return new GrupoResponseDTO(grupoSalvo, 1L);
+        return new GrupoResponseDTO(grupoSalvo, 1L, 0L);
     }
 
     @Transactional
@@ -91,7 +96,8 @@ public class GrupoService {
 
         Grupo salvo = grupoRepository.save(grupo);
         long qtd = grupoMembroRepository.countByGrupoId(salvo.getId());
-        return new GrupoResponseDTO(salvo, qtd);
+        long atv = tarefaRepository.countByGrupoId(salvo.getId());
+        return new GrupoResponseDTO(salvo, qtd, atv);
     }
 
     @Transactional
@@ -108,10 +114,12 @@ public class GrupoService {
     }
 
     public List<GrupoResponseDTO> listarTodos() {
+
         return grupoRepository.findAll().stream()
                 .map(grupo -> { 
                     long qtd = grupoMembroRepository.countByGrupoId(grupo.getId());
-                    return new GrupoResponseDTO(grupo, qtd);
+                    long atv = tarefaRepository.countByGrupoId(grupo.getId());
+                    return new GrupoResponseDTO(grupo, qtd, atv);
                 }).toList();
     }
 
@@ -120,6 +128,7 @@ public class GrupoService {
                 .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
         
         long qtd = grupoMembroRepository.countByGrupoId(id);
-        return new GrupoResponseDTO(grupo, qtd);
+        long atv = tarefaRepository.countByGrupoId(grupo.getId());
+        return new GrupoResponseDTO(grupo, qtd, atv);
     }
 }

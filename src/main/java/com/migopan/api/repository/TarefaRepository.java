@@ -15,4 +15,6 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long>{
     List<Tarefa> findByGrupoId(long grupoId);
 
     List<Tarefa> findByGrupoIdAndConcluida(long grupoId, Boolean concluida);
+
+    long countByGrupoId(long grupoId);
 }

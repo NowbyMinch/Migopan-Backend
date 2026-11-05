@@ -26,6 +26,7 @@ public class GrupoDTOs {
         String nome,
         String descricao,
         Long quantidadeMembros,
+        Long quantidadeAtividades,
         Integer nivel, 
         Integer sequenciaDias,
         LocalDateTime dataCriacao
@@ -36,18 +37,20 @@ public class GrupoDTOs {
                 grupo.getNome(),
                 grupo.getDescricao(),
                 1L,
+                0L,
                 grupo.getNivel() != null ? grupo.getNivel() : 1,
                 grupo.getSequenciaDias() != null ? grupo.getSequenciaDias() : 0,
                 grupo.getDataCriacao()
             );
         }
 
-        public GrupoResponseDTO(Grupo grupo, Long quantidadeMembros) {
+        public GrupoResponseDTO(Grupo grupo, Long quantidadeMembros, long quantidadeAtividades) {
             this(
                 grupo.getId(),
                 grupo.getNome(),
                 grupo.getDescricao(),
                 quantidadeMembros != null ? quantidadeMembros : 1L,
+                quantidadeAtividades,
                 grupo.getNivel() != null ? grupo.getNivel() : 1,
                 grupo.getSequenciaDias() != null ? grupo.getSequenciaDias() : 0,
                 grupo.getDataCriacao()

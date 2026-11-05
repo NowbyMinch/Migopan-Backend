@@ -27,10 +27,6 @@ public class GrupoController {
     @GetMapping
     public ResponseEntity<?> getAllGrupos() {
         List<GrupoResponseDTO> grupos = grupoService.listarTodos();
-        
-        if (grupos.isEmpty()) {
-            throw new NotFoundException("Nenhum grupo encontrado.");            
-        }
 
         return ResponseEntity.ok(grupos);
     }
