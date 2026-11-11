@@ -1,15 +1,10 @@
 package com.migopan.api.controller;
 
-import com.migopan.api.dto.GrupoMembroDTOs.*;
-
 import java.util.List;
-import jakarta.validation.Valid;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,51 +14,49 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.migopan.api.service.GrupoMembroService;
+import com.migopan.api.dto.GrupoMembroDTOs.AtualizarMembroRequestDTO;
+import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroRequestDTO;
+import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroResponseDTO;
 import com.migopan.api.model.Usuario;
+import com.migopan.api.service.GrupoMembroService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/grupos")
+@RequestMapping("/api/grupos/{grupoId}/membros")
+@RequiredArgsConstructor
 public class GrupoMembroController {
-    @Autowired
-    private GrupoMembroService grupoMembroService;
 
-    
-    @GetMapping("/{grupoId}/membros")
-    public ResponseEntity<List<GrupoMembroResponseDTO>> listarMembros(@PathVariable Long grupoId) {
-        List<GrupoMembroResponseDTO> membros = grupoMembroService.getMembrosPorGrupo(grupoId);
-        return ResponseEntity.ok(membros);
+    private final GrupoMembroService grupoMembroService;
+
+    @GetMapping
+    public List<GrupoMembroResponseDTO> listar(@PathVariable Long grupoId,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        return grupoMembroService.listarMembros(grupoId, usuarioLogado);
     }
 
-    @PostMapping("/{grupoId}/membros")
-    public ResponseEntity<GrupoMembroResponseDTO> adicionarMembro (
-            @PathVariable Long grupoId, 
+    @PostMapping
+    public ResponseEntity<GrupoMembroResponseDTO> adicionar(@PathVariable Long grupoId,
             @AuthenticationPrincipal Usuario usuarioLogado,
-            @RequestBody @Valid GrupoMembroRequestDTO dto){
-        
-        GrupoMembroResponseDTO novoMembro = grupoMembroService.adicionarMembro(grupoId, usuarioLogado, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoMembro);
+            @RequestBody @Valid GrupoMembroRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(grupoMembroService.adicionarMembro(grupoId, usuarioLogado, dto));
     }
 
-    @PatchMapping("/{grupoId}/membros/{usuarioIdMembro}")
-    public ResponseEntity<GrupoMembroResponseDTO> atualizarMembro(
-            @PathVariable Long grupoId,
+    @PatchMapping("/{usuarioIdMembro}")
+    public GrupoMembroResponseDTO atualizar(@PathVariable Long grupoId,
             @PathVariable Long usuarioIdMembro,
-            @AuthenticationPrincipal Usuario usuario,
-            @RequestBody @Valid AtualizarMembroRequestDTO dto){
-            
-        GrupoMembroResponseDTO response = grupoMembroService.atualizarMembro(grupoId, usuario.getId(), usuarioIdMembro, dto);
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/{grupoId}/membros/{usuarioIdMembro}")
-    public ResponseEntity<Void> removerMembro(
-            @PathVariable Long grupoId, 
             @AuthenticationPrincipal Usuario usuarioLogado,
-            @PathVariable Long usuarioIdMembro) {
-
-        grupoMembroService.removerMembro(grupoId, usuarioLogado.getId(), usuarioIdMembro);
-        return ResponseEntity.ok().build();
+            @RequestBody @Valid AtualizarMembroRequestDTO dto) {
+        return grupoMembroService.atualizarMembro(grupoId, usuarioLogado, usuarioIdMembro, dto);
     }
 
+    @DeleteMapping("/{usuarioIdMembro}")
+    public ResponseEntity<Void> remover(@PathVariable Long grupoId,
+            @PathVariable Long usuarioIdMembro,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        grupoMembroService.removerMembro(grupoId, usuarioLogado, usuarioIdMembro);
+        return ResponseEntity.noContent().build();
+    }
 }

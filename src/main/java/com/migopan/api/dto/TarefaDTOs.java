@@ -1,100 +1,95 @@
 package com.migopan.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.migopan.api.model.Tarefa;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public class TarefaDTOs {
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.migopan.api.model.Tarefa;
+import com.migopan.api.model.enums.Repeticao;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public final class TarefaDTOs {
+
+    private TarefaDTOs() {
+    }
 
     public record CriarTarefaRequestDTO(
-        @NotBlank(message = "O título é obrigatório")
-        @Size(max = 150, message = "O título deve ter no máximo 150 caracteres")
-        String titulo,
-        
-        String descricao,
-                
-        String categoria,
-        String cor,
-        Boolean prioridade,
-                    
-        // ("NENHUMA", "DIARIA", "SEMANAL", "MENSAL")
-        String repeticao,
-        
-        @JsonFormat(pattern = "yyyy-MM-dd")
-        LocalDate dataLimite,
-                
-        @JsonFormat(pattern = "HH:mm")
-        LocalTime horarioLimite,
+            @NotBlank(message = "O título é obrigatório")
+            @Size(max = 150, message = "O título deve ter no máximo 150 caracteres")
+            String titulo,
 
-        // Se enviado, é tarefa do grupo. Se null, é tarefa pessoal.
-        Long grupoId,
-        
-        Long usuarioAtribuidoId
+            String descricao,
 
-    ) {}
+            @Size(max = 50, message = "A categoria deve ter no máximo 50 caracteres")
+            String categoria,
+
+            @Size(max = 20, message = "A cor deve ter no máximo 20 caracteres")
+            String cor,
+
+            Boolean prioridade,
+
+            Repeticao repeticao,
+
+            @JsonFormat(pattern = "yyyy-MM-dd")
+            LocalDate dataLimite,
+
+            @JsonFormat(pattern = "HH:mm")
+            LocalTime horarioLimite,
+
+            Long grupoId) {
+    }
 
     public record AtualizarTarefaRequestDTO(
-        @Size(max = 150, message = "O título deve ter no máximo 150 caracteres")
-        String titulo,
-        String descricao,
-        
-        String categoria,
-        String cor,
-        Boolean prioridade,
-        
-        String repeticao,
-        
-        @JsonFormat(pattern = "yyyy-MM-dd")
-        LocalDate dataLimite,
-        
-        @JsonFormat(pattern = "HH:mm")
-        LocalTime horarioLimite,
-            
-        LocalTime horarioResolucao
-    ) {}
+            @Size(max = 150, message = "O título deve ter no máximo 150 caracteres")
+            String titulo,
+
+            String descricao,
+
+            @Size(max = 50, message = "A categoria deve ter no máximo 50 caracteres")
+            String categoria,
+
+            @Size(max = 20, message = "A cor deve ter no máximo 20 caracteres")
+            String cor,
+
+            Boolean prioridade,
+
+            Repeticao repeticao,
+
+            @JsonFormat(pattern = "yyyy-MM-dd")
+            LocalDate dataLimite,
+
+            @JsonFormat(pattern = "HH:mm")
+            LocalTime horarioLimite) {
+    }
 
     public record TarefaResponseDTO(
-        Long id,
-        String titulo,
-        String descricao,
-        String categoria,
-        String cor,
-        Boolean prioridade,
-        String repeticao,
-        LocalDate dataLimite,
-        LocalTime horarioLimite,
-        LocalTime horarioResolucao,
-        LocalDateTime dataCriacao,
-        LocalDateTime dataResolucao,
-        Boolean concluida,
-        Long grupoId,
-        Long usuarioCriadorId,
-        Long usuarioAtribuidoId
-    ) {
-        public TarefaResponseDTO(Tarefa tarefa) {
-            this(
-                tarefa.getId(),
-                tarefa.getTitulo(),
-                tarefa.getDescricao(),
-                tarefa.getCategoria(),
-                tarefa.getCor(),
-                tarefa.getPrioridade(),
-                tarefa.getRepeticao(),
-                tarefa.getDataLimite(),
-                tarefa.getHorarioLimite(),
-                tarefa.getHorarioResolucao(),
-                tarefa.getDataCriacao(),
-                tarefa.getDataResolucao(),
-                tarefa.getConcluida(),
-                tarefa.getGrupo() != null ? tarefa.getGrupo().getId() : null,
-                tarefa.getUsuarioCriador() != null ? tarefa.getUsuarioCriador().getId() : null,
-                tarefa.getUsuarioAtribuido() != null ? tarefa.getUsuarioAtribuido().getId() : null
-            );
+            Long id,
+            String titulo,
+            String descricao,
+            String categoria,
+            String cor,
+            Boolean prioridade,
+            Repeticao repeticao,
+            LocalDate dataLimite,
+            LocalTime horarioLimite,
+            LocalTime horarioResolucao,
+            LocalDateTime dataCriacao,
+            LocalDateTime dataResolucao,
+            Boolean concluida,
+            Long grupoId,
+            Long usuarioCriadorId,
+            Long usuarioAtribuidoId) {
+
+        public TarefaResponseDTO(Tarefa t) {
+            this(t.getId(), t.getTitulo(), t.getDescricao(), t.getCategoria(), t.getCor(),
+                    t.getPrioridade(), t.getRepeticao(), t.getDataLimite(), t.getHorarioLimite(),
+                    t.getHorarioResolucao(), t.getDataCriacao(), t.getDataResolucao(), t.getConcluida(),
+                    t.getGrupo() != null ? t.getGrupo().getId() : null,
+                    t.getUsuarioCriador() != null ? t.getUsuarioCriador().getId() : null,
+                    t.getUsuarioAtribuido() != null ? t.getUsuarioAtribuido().getId() : null);
         }
     }
 }

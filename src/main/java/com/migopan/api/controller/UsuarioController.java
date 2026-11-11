@@ -2,65 +2,64 @@ package com.migopan.api.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.migopan.api.dto.UsuarioDTOs.*;
+import com.migopan.api.dto.UsuarioDTOs.AtualizarUsuarioRequestDTO;
+import com.migopan.api.dto.UsuarioDTOs.PerfilResponseDTO;
+import com.migopan.api.dto.UsuarioDTOs.UsuarioRequestDTO;
+import com.migopan.api.dto.UsuarioDTOs.UsuarioResponseDTO;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.service.UsuarioService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/usuarios")
+@RequiredArgsConstructor
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
     @GetMapping
-    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
-        return ResponseEntity.ok(usuarioService.listarTodos());
+    public List<PerfilResponseDTO> listar() {
+        return usuarioService.listarPerfis();
     }
 
     @GetMapping("/perfil")
-    public ResponseEntity<UsuarioResponseDTO> perfilLogado(@AuthenticationPrincipal Usuario usuarioLogado) {
-        System.out.println(usuarioLogado);
-        return ResponseEntity.ok(usuarioService.buscarPerfilLogado(usuarioLogado.getId()));
+    public UsuarioResponseDTO perfilLogado(@AuthenticationPrincipal Usuario usuarioLogado) {
+        return usuarioService.buscarPerfilLogado(usuarioLogado.getId());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.buscarPorId(id));
-    }
-
-    @GetMapping("/{id}/publico")
-    public ResponseEntity<PerfilResponseDTO> perfilPublico(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.buscarPerfilPublico(id));
+    public PerfilResponseDTO buscarPorId(@PathVariable Long id) {
+        return usuarioService.buscarPerfilPublico(id);
     }
 
     @PostMapping
     public ResponseEntity<UsuarioResponseDTO> criar(@RequestBody @Valid UsuarioRequestDTO dto) {
-        UsuarioResponseDTO novoUsuario = usuarioService.criarUsuario(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.criarUsuario(dto));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> atualizar(
-            @PathVariable Long id,
+    public UsuarioResponseDTO atualizar(@PathVariable Long id,
             @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestBody @Valid AtualizarUsuarioRequestDTO dto) {
-        UsuarioResponseDTO usuarioAtualizado = usuarioService.atualizarUsuario(id, usuarioLogado, dto);
-        return ResponseEntity.ok(usuarioAtualizado);
+        return usuarioService.atualizarUsuario(id, usuarioLogado, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable Long id,
-            @AuthenticationPrincipal Usuario usuarioLogado) {
+    public ResponseEntity<Void> deletar(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
         usuarioService.deletarUsuario(id, usuarioLogado);
         return ResponseEntity.noContent().build();
     }

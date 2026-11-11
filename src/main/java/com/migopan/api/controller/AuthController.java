@@ -1,92 +1,55 @@
 package com.migopan.api.controller;
 
-import com.migopan.api.model.Usuario;
-import com.migopan.api.repository.UsuarioRepository;
-import com.migopan.api.security.JwtService;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.migopan.api.dto.LoginRequestDTO;
+import com.migopan.api.service.AuthService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtService jwtService;
+
+    private final AuthService authService;
 
     @GetMapping("/me")
-    public ResponseEntity<?> checkAuth(@CookieValue(name = "token", required = false) String token) { 
-        if (token == null || token.isBlank()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("authenticated", false, "message", "Token não encontrado"));
-        }
-        
-        if (!jwtService.validarToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("authenticated", false, "message", "Token inválido"));
-        }
-
-        String email = jwtService.extrairEmail(token);
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("authenticated", false, "message", "Usuário não encontrado"));
-        }
-
-        return ResponseEntity.ok(Map.of("authenticated", true, "id", usuario.getId(), "email", email, "nome", usuario.getNome()));
+    public ResponseEntity<?> me(@CookieValue(name = "token", required = false) String token) {
+        return authService.usuarioDoToken(token)
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(
+                        "authenticated", true,
+                        "id", u.getId(),
+                        "email", u.getEmail(),
+                        "nome", u.getNome())))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("authenticated", false, "message", "Não autenticado")));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpServletResponse response){
-        String email = credentials.get("email");
-        String senha = credentials.get("senha");
-
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-        if (usuario == null || !passwordEncoder.matches(senha, usuario.getSenhaHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Credenciais inválidas"));
-        }   
-
-        String token = jwtService.gerarToken(usuario.getEmail());
-
-        // Uso profissional do ResponseCookie compatível com ambientes desacoplados
-        ResponseCookie cookie = ResponseCookie.from("token", token)
-                .httpOnly(true)
-                .secure(false) // Mude para true apenas se sua aplicação estiver em HTTPS em produção
-                .path("/")
-                .maxAge(86400) // 1 dia
-                .sameSite("Lax")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso"));
+    public ResponseEntity<Map<String, String>> login(@RequestBody @Valid LoginRequestDTO dto) {
+        ResponseCookie cookie = authService.login(dto.email(), dto.senha());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("message", "Login realizado com sucesso"));
     }
 
-    @PostMapping("/logout") 
-    public ResponseEntity<?> logout(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("token", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0) // Expira e remove o cookie do navegador imediatamente
-                .sameSite("Lax")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return ResponseEntity.ok(Map.of("message", "Logout realizado com sucesso"));
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, authService.logout().toString())
+                .body(Map.of("message", "Logout realizado com sucesso"));
     }
 }

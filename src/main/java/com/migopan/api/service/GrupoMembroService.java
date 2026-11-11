@@ -2,119 +2,119 @@ package com.migopan.api.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.migopan.api.dto.GrupoMembroDTOs.*;
+import com.migopan.api.dto.GrupoMembroDTOs.AtualizarMembroRequestDTO;
+import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroRequestDTO;
+import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroResponseDTO;
 import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
 import com.migopan.api.model.Usuario;
+import com.migopan.api.model.enums.PapelGrupo;
 import com.migopan.api.model.keys.GrupoMembroId;
 import com.migopan.api.repository.GrupoMembroRepository;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.repository.UsuarioRepository;
 
-
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GrupoMembroService {
-    @Autowired
-    private GrupoMembroRepository grupoMembroRepository;
 
-    @Autowired
-    private GrupoRepository grupoRepository;
+    private final GrupoMembroRepository grupoMembroRepository;
+    private final GrupoRepository grupoRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    public List<GrupoMembroResponseDTO> getMembrosPorGrupo(Long grupoId) {
+    public List<GrupoMembroResponseDTO> listarMembros(Long grupoId, Usuario usuarioLogado) {
         if (!grupoRepository.existsById(grupoId)) {
             throw new NotFoundException("Grupo não encontrado.");
         }
-        
-        List<GrupoMembro> membros = grupoMembroRepository.findByGrupoIdWithDetails(grupoId);
-        
-        return membros.stream()
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndBloqueadoFalse(grupoId, usuarioLogado.getId())) {
+            throw new AcessoNegadoException("Você não tem acesso aos membros deste grupo.");
+        }
+        return grupoMembroRepository.findByGrupoIdWithDetails(grupoId).stream()
                 .map(GrupoMembroResponseDTO::new)
                 .toList();
     }
 
-    public boolean verificarSeAdmin(Long grupoId, Long usuarioId) {
-        return grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioId, "ADMIN");
-    }
-
     @Transactional
-    public GrupoMembroResponseDTO adicionarMembro(Long grupoId, Usuario usuarioLogado, GrupoMembroRequestDTO dto){
-        if (!verificarSeAdmin(grupoId, usuarioLogado.getId())) {
-            throw new AcessoNegadoException("Apenas administradores podem adicionar membros.");
-        }
+    public GrupoMembroResponseDTO adicionarMembro(Long grupoId, Usuario usuarioLogado, GrupoMembroRequestDTO dto) {
+        exigirAdmin(grupoId, usuarioLogado, "Apenas administradores podem adicionar membros.");
 
         Grupo grupo = grupoRepository.findById(grupoId)
-            .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
-
+                .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
         Usuario usuario = usuarioRepository.findById(dto.usuarioId())
-            .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
 
-        GrupoMembroId id = new GrupoMembroId(grupoId, dto.usuarioId());        
+        GrupoMembroId id = new GrupoMembroId(grupoId, dto.usuarioId());
         if (grupoMembroRepository.existsById(id)) {
             throw new IllegalArgumentException("Este usuário já é membro do grupo.");
         }
 
-        GrupoMembro grupoMembro = new GrupoMembro();
-        grupoMembro.setId(id);
-        grupoMembro.setGrupo(grupo);
-        grupoMembro.setUsuario(usuario);
+        GrupoMembro membro = new GrupoMembro();
+        membro.setId(id);
+        membro.setGrupo(grupo);
+        membro.setUsuario(usuario);
+        membro.setPapel(dto.papel() != null ? dto.papel() : PapelGrupo.MEMBRO);
+        membro.setBloqueado(false);
 
-        if (dto.papel() != null && !dto.papel().isBlank()) {
-            grupoMembro.setPapel(dto.papel());
-        } else {
-             grupoMembro.setPapel("MEMBRO");
-        }
-
-        grupoMembro.setBloqueado(false);
-
-        GrupoMembro salvo = grupoMembroRepository.save(grupoMembro);
-
-        return new GrupoMembroResponseDTO(salvo);
+        return new GrupoMembroResponseDTO(grupoMembroRepository.save(membro));
     }
 
     @Transactional
-    public void removerMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro) {
-        if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
-            throw new AcessoNegadoException("Apenas administradores podem remover membros.");
+    public GrupoMembroResponseDTO atualizarMembro(Long grupoId, Usuario usuarioLogado, Long usuarioIdMembro,
+            AtualizarMembroRequestDTO dto) {
+        exigirAdmin(grupoId, usuarioLogado, "Apenas administradores podem atualizar membros.");
+        GrupoMembro membro = buscarMembro(grupoId, usuarioIdMembro);
+
+        boolean deixaDeSerAdminAtivo = (dto.papel() != null && dto.papel() != PapelGrupo.ADMIN)
+                || Boolean.TRUE.equals(dto.bloqueado());
+        if (deixaDeSerAdminAtivo) {
+            garantirQueNaoSeraOUltimoAdmin(grupoId, membro);
         }
 
-        GrupoMembroId id = new GrupoMembroId(grupoId, usuarioIdMembro);
-        if (!grupoMembroRepository.existsById(id)) {
-            throw new NotFoundException("Usuário não é membro do grupo.");
+        if (dto.papel() != null) {
+            membro.setPapel(dto.papel());
         }
-
-        grupoMembroRepository.deleteById(id);
-    }
-
-    @Transactional
-    public GrupoMembroResponseDTO atualizarMembro(Long grupoId, Long usuarioIdAdminLogado, Long usuarioIdMembro, AtualizarMembroRequestDTO dto) {
-        if (!verificarSeAdmin(grupoId, usuarioIdAdminLogado)) {
-            throw new AcessoNegadoException("Apenas administradores podem atualizar membros.");
-        }
-
-        GrupoMembroId id = new GrupoMembroId(grupoId, usuarioIdMembro);
-        GrupoMembro grupoMembro = grupoMembroRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não é membro do grupo."));
-
         if (dto.bloqueado() != null) {
-            grupoMembro.setBloqueado(dto.bloqueado());
+            membro.setBloqueado(dto.bloqueado());
         }
 
-        if (dto.papel() != null && !dto.papel().isBlank()) {
-            grupoMembro.setPapel(dto.papel());
-        }
-
-        GrupoMembro salvo = grupoMembroRepository.save(grupoMembro);
-        return new GrupoMembroResponseDTO(salvo);
+        return new GrupoMembroResponseDTO(grupoMembroRepository.save(membro));
     }
 
+    @Transactional
+    public void removerMembro(Long grupoId, Usuario usuarioLogado, Long usuarioIdMembro) {
+        exigirAdmin(grupoId, usuarioLogado, "Apenas administradores podem remover membros.");
+        GrupoMembro membro = buscarMembro(grupoId, usuarioIdMembro);
+        garantirQueNaoSeraOUltimoAdmin(grupoId, membro);
+        grupoMembroRepository.delete(membro);
+    }
+
+    // ---------- apoio ----------
+
+    private GrupoMembro buscarMembro(Long grupoId, Long usuarioId) {
+        return grupoMembroRepository.findById(new GrupoMembroId(grupoId, usuarioId))
+                .orElseThrow(() -> new NotFoundException("Usuário não é membro do grupo."));
+    }
+
+    private void exigirAdmin(Long grupoId, Usuario usuario, String mensagem) {
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapelAndBloqueadoFalse(
+                grupoId, usuario.getId(), PapelGrupo.ADMIN)) {
+            throw new AcessoNegadoException(mensagem);
+        }
+    }
+
+    private void garantirQueNaoSeraOUltimoAdmin(Long grupoId, GrupoMembro alvo) {
+        boolean alvoEhAdminAtivo = alvo.getPapel() == PapelGrupo.ADMIN && !Boolean.TRUE.equals(alvo.getBloqueado());
+        if (alvoEhAdminAtivo
+                && grupoMembroRepository.countByGrupoIdAndPapelAndBloqueadoFalse(grupoId, PapelGrupo.ADMIN) <= 1) {
+            throw new IllegalArgumentException("O grupo precisa ter pelo menos um administrador ativo.");
+        }
+    }
 }

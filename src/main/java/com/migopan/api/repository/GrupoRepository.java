@@ -1,9 +1,8 @@
 package com.migopan.api.repository;
 
-import com.migopan.api.model.Grupo;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
-public interface GrupoRepository extends JpaRepository<Grupo, Long>{
+import com.migopan.api.model.Grupo;
+
+public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 }

@@ -1,9 +1,15 @@
 package com.migopan.api.model;
 
+import java.time.LocalDateTime;
+
+import com.migopan.api.model.enums.PapelGrupo;
 import com.migopan.api.model.keys.GrupoMembroId;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -13,8 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "grupo_membro")
@@ -34,9 +38,10 @@ public class GrupoMembro {
     @MapsId("grupo_id")
     @JoinColumn(name = "grupo_id")
     private Grupo grupo;
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String papel = "MEMBRO"; // ADMIN, MEMBRO
+    private PapelGrupo papel = PapelGrupo.MEMBRO;
 
     @Column(name = "data_entrada", nullable = false)
     private LocalDateTime dataEntrada = LocalDateTime.now();

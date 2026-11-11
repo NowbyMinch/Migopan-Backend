@@ -5,49 +5,51 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
-    private final String SECRET_KEY = "migopan_chave_secreta_super_segura_para_jwt_123456789";
-    private final long EXPIRATION_TIME = 86400000;
 
-    private SecretKey getSigninKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
-    };
+    private final SecretKey key;
+    private final long expirationMs;
+
+    public JwtService(@Value("${app.jwt.secret}") String secret,
+                      @Value("${app.jwt.expiration-ms:86400000}") long expirationMs) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationMs = expirationMs;
+    }
+
+    public long getExpirationSeconds() {
+        return expirationMs / 1000;
+    }
 
     public String gerarToken(String email) {
+        long agora = System.currentTimeMillis();
         return Jwts.builder()
                 .subject(email)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(getSigninKey())
+                .issuedAt(new Date(agora))
+                .expiration(new Date(agora + expirationMs))
+                .signWith(key)
                 .compact();
-    };
-    
+    }
+
     public String extrairEmail(String token) {
-        Claims claims = Jwts.parser()
-            .verifyWith(getSigninKey()) // Verifica se é do sistema
-            .build() 
-            .parseSignedClaims(token) // Pega pelo usuário logado
-            .getPayload();
-        return claims.getSubject();
-    };  
+        return Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
 
     public boolean validarToken(String token) {
         try {
-            Jwts.parser().verifyWith(getSigninKey()).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
-        }
-
-        catch (Exception e) {
+        } catch (Exception e) {
             return false;
         }
-        
-    };  
-
+    }
 }

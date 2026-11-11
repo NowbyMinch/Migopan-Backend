@@ -4,9 +4,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.migopan.api.dto.TarefaDTOs.AtualizarTarefaRequestDTO;
 import com.migopan.api.dto.TarefaDTOs.CriarTarefaRequestDTO;
@@ -16,176 +15,104 @@ import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.Tarefa;
 import com.migopan.api.model.Usuario;
+import com.migopan.api.model.enums.Repeticao;
 import com.migopan.api.repository.GrupoMembroRepository;
-import com.migopan.api.repository.UsuarioRepository;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.repository.TarefaRepository;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
-@Service 
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TarefaService {
-    @Autowired
-    public TarefaRepository tarefaRepository;
-    
-    @Autowired
-    public GrupoRepository grupoRepository;
-    
-    @Autowired
-    public UsuarioRepository usuarioRepository;
-    
-    @Autowired
-    public GrupoMembroRepository grupoMembroRepository;
 
-    private void validarAcessoTarefa(Tarefa tarefa, Usuario usuario) {
-        if (tarefa.getUsuarioAtribuido() != null) {
-            if (!tarefa.getUsuarioAtribuido().getId().equals(usuario.getId())
-                    && !tarefa.getUsuarioCriador().getId().equals(usuario.getId())) {
-                throw new AcessoNegadoException("Você não tem acesso a esta tarefa pessoal.");
-            }
-        }
-        else if (tarefa.getGrupo() != null) {
-            if (!grupoMembroRepository.existsByGrupoIdAndUsuarioId(tarefa.getGrupo().getId(), usuario.getId())) {
-                throw new AcessoNegadoException("Você não tem acesso às tarefas deste grupo.");
-            }
-        }
-    }
+    private final TarefaRepository tarefaRepository;
+    private final GrupoRepository grupoRepository;
+    private final GrupoMembroRepository grupoMembroRepository;
 
     @Transactional
     public TarefaResponseDTO criarTarefa(Usuario usuarioLogado, CriarTarefaRequestDTO dto) {
         Tarefa tarefa = new Tarefa();
-        tarefa.setTitulo(dto.titulo());
+        tarefa.setTitulo(dto.titulo().trim());
         tarefa.setDescricao(dto.descricao());
-        
         tarefa.setCategoria(dto.categoria());
         tarefa.setCor(dto.cor());
-        tarefa.setPrioridade(dto.prioridade() != null ? dto.prioridade() : false);
+        tarefa.setPrioridade(Boolean.TRUE.equals(dto.prioridade()));
+        tarefa.setRepeticao(dto.repeticao() != null ? dto.repeticao() : Repeticao.NENHUMA);
         tarefa.setDataLimite(dto.dataLimite());
         tarefa.setHorarioLimite(dto.horarioLimite());
-        
-        tarefa.setRepeticao(dto.repeticao() != null && !dto.repeticao().isBlank() ? dto.repeticao() : "NENHUMA");
         tarefa.setUsuarioCriador(usuarioLogado);
         tarefa.setConcluida(false);
 
         if (dto.grupoId() != null) {
             Grupo grupo = grupoRepository.findById(dto.grupoId())
                     .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
-
-            if (!grupoMembroRepository.existsByGrupoIdAndUsuarioId(dto.grupoId(), usuarioLogado.getId())) {
-                throw new AcessoNegadoException("Você não pertence a este grupo.");
-            }
-
+            exigirMembro(grupo.getId(), usuarioLogado, "Você não pertence a este grupo.");
             tarefa.setGrupo(grupo);
-            tarefa.setUsuarioAtribuido(null);
         } else {
-            tarefa.setGrupo(null);
             tarefa.setUsuarioAtribuido(usuarioLogado);
         }
 
-        Tarefa salva = tarefaRepository.save(tarefa);
-        return new TarefaResponseDTO(salva);
+        return new TarefaResponseDTO(tarefaRepository.save(tarefa));
     }
-    
+
     public List<TarefaResponseDTO> listarTarefasPessoais(Usuario usuarioLogado, Boolean concluida) {
-        if (usuarioLogado == null || !usuarioRepository.existsById(usuarioLogado.getId())) {
-            throw new NotFoundException("Usuário não existe.");            
-        }   
-
-        List<Tarefa> tarefas;
-
-
-        if (concluida != null) {
-            tarefas = tarefaRepository.findByUsuarioAtribuidoIdAndConcluida(usuarioLogado.getId(), concluida);
-        } else {
-            tarefas = tarefaRepository.findByUsuarioAtribuidoId(usuarioLogado.getId());
-        }
-
+        List<Tarefa> tarefas = concluida != null
+                ? tarefaRepository.findByUsuarioAtribuidoIdAndConcluida(usuarioLogado.getId(), concluida)
+                : tarefaRepository.findByUsuarioAtribuidoId(usuarioLogado.getId());
         return tarefas.stream().map(TarefaResponseDTO::new).toList();
     }
-    
+
     public List<TarefaResponseDTO> listarTarefasPorGrupo(Long grupoId, Usuario usuarioLogado, Boolean concluida) {
         if (!grupoRepository.existsById(grupoId)) {
             throw new NotFoundException("Grupo não encontrado.");
         }
+        exigirMembro(grupoId, usuarioLogado, "Você não tem acesso às tarefas deste grupo.");
 
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioLogado.getId())) {
-            throw new AcessoNegadoException("Você não tem acesso às tarefas deste grupo.");
-        }
-
-        List<Tarefa> tarefas;
-
-        if (concluida != null) {
-            tarefas = tarefaRepository.findByGrupoIdAndConcluida(grupoId, concluida);
-        } else {
-            tarefas = tarefaRepository.findByGrupoId(grupoId);
-        }
-
+        List<Tarefa> tarefas = concluida != null
+                ? tarefaRepository.findByGrupoIdAndConcluida(grupoId, concluida)
+                : tarefaRepository.findByGrupoId(grupoId);
         return tarefas.stream().map(TarefaResponseDTO::new).toList();
     }
 
-    public long contarTarefasPorGrupo(Long grupoId, Usuario usuarioLogado) {
-        if (!grupoRepository.existsById(grupoId)) {
-            throw new NotFoundException("Grupo não encontrado.");
-        }
-
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioLogado.getId())) {
-            throw new AcessoNegadoException("Você não tem acesso aos dados deste grupo.");
-        }
-        
-        return tarefaRepository.countByGrupoId(grupoId);
-    }
-
     public TarefaResponseDTO buscarPorId(Long tarefaId, Usuario usuarioLogado) {
-        Tarefa tarefa = tarefaRepository.findById(tarefaId)
-                .orElseThrow(() -> new NotFoundException("Tarefa não encontrada."));
-
-        validarAcessoTarefa(tarefa, usuarioLogado);
-
-        return new TarefaResponseDTO(tarefa);
+        return new TarefaResponseDTO(buscarComAcesso(tarefaId, usuarioLogado));
     }
 
     @Transactional
-    public TarefaResponseDTO AlterarConclusao(Long tarefaId, Usuario usuarioLogado) {
-        Tarefa tarefa = tarefaRepository.findById(tarefaId)
-                .orElseThrow(() -> new NotFoundException("Tarefa não encontrada."));
+    public TarefaResponseDTO alterarConclusao(Long tarefaId, Usuario usuarioLogado) {
+        Tarefa tarefa = buscarComAcesso(tarefaId, usuarioLogado);
 
-        validarAcessoTarefa(tarefa, usuarioLogado);
+        boolean novoStatus = !Boolean.TRUE.equals(tarefa.getConcluida());
+        tarefa.setConcluida(novoStatus); 
+        tarefa.setDataResolucao(novoStatus ? LocalDateTime.now() : null);
+        tarefa.setHorarioResolucao(novoStatus ? LocalTime.now() : null);
 
-        Boolean novoStatus = !tarefa.getConcluida();
-
-        if (novoStatus) {
-            tarefa.setDataResolucao(LocalDateTime.now());
-            tarefa.setHorarioResolucao(LocalTime.now());
-        } else {
-            tarefa.setDataResolucao(null);
-            tarefa.setHorarioResolucao(null);
-        }
-
-        Tarefa salva = tarefaRepository.save(tarefa);
-        return new TarefaResponseDTO(salva);
+        return new TarefaResponseDTO(tarefaRepository.save(tarefa));
     }
-    
+
     @Transactional
     public TarefaResponseDTO atualizarTarefa(Long tarefaId, Usuario usuarioLogado, AtualizarTarefaRequestDTO dto) {
-        Tarefa tarefa = tarefaRepository.findById(tarefaId)
-                .orElseThrow(() -> new NotFoundException("Tarefa não encontrada."));
-
-        validarAcessoTarefa(tarefa, usuarioLogado);
+        Tarefa tarefa = buscarComAcesso(tarefaId, usuarioLogado);
 
         if (dto.titulo() != null && !dto.titulo().isBlank()) {
-            tarefa.setTitulo(dto.titulo());
+            tarefa.setTitulo(dto.titulo().trim());
         }
         if (dto.descricao() != null) {
             tarefa.setDescricao(dto.descricao());
-        }
-        if (dto.repeticao() != null && !dto.repeticao().isBlank()) {
-            tarefa.setRepeticao(dto.repeticao());
         }
         if (dto.categoria() != null) {
             tarefa.setCategoria(dto.categoria());
         }
         if (dto.cor() != null) {
             tarefa.setCor(dto.cor());
+        }
+        if (dto.prioridade() != null) { 
+            tarefa.setPrioridade(dto.prioridade());
+        }
+        if (dto.repeticao() != null) {
+            tarefa.setRepeticao(dto.repeticao());
         }
         if (dto.dataLimite() != null) {
             tarefa.setDataLimite(dto.dataLimite());
@@ -194,18 +121,36 @@ public class TarefaService {
             tarefa.setHorarioLimite(dto.horarioLimite());
         }
 
-        Tarefa salva = tarefaRepository.save(tarefa);
-        return new TarefaResponseDTO(salva);
+        return new TarefaResponseDTO(tarefaRepository.save(tarefa));
     }
-    
-    @Transactional 
+
+    @Transactional
     public void deletarTarefa(Long tarefaId, Usuario usuarioLogado) {
+        tarefaRepository.delete(buscarComAcesso(tarefaId, usuarioLogado));
+    }
+
+    // ---------- apoio ----------
+
+    private Tarefa buscarComAcesso(Long tarefaId, Usuario usuario) {
         Tarefa tarefa = tarefaRepository.findById(tarefaId)
                 .orElseThrow(() -> new NotFoundException("Tarefa não encontrada."));
 
-        validarAcessoTarefa(tarefa, usuarioLogado);
-
-        tarefaRepository.delete(tarefa);
+        if (tarefa.getGrupo() != null) {
+            exigirMembro(tarefa.getGrupo().getId(), usuario, "Você não tem acesso às tarefas deste grupo.");
+        } else {
+            boolean ehAtribuido = tarefa.getUsuarioAtribuido() != null
+                    && tarefa.getUsuarioAtribuido().getId().equals(usuario.getId());
+            boolean ehCriador = tarefa.getUsuarioCriador().getId().equals(usuario.getId());
+            if (!ehAtribuido && !ehCriador) {
+                throw new AcessoNegadoException("Você não tem acesso a esta tarefa pessoal.");
+            }
+        }
+        return tarefa;
     }
-    
+
+    private void exigirMembro(Long grupoId, Usuario usuario, String mensagem) {
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndBloqueadoFalse(grupoId, usuario.getId())) {
+            throw new AcessoNegadoException(mensagem);
+        }
+    }
 }

@@ -1,134 +1,131 @@
 package com.migopan.api.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.migopan.api.dto.GrupoDTOs.*;
+import com.migopan.api.dto.GrupoDTOs.AtualizarGrupoRequestDTO;
+import com.migopan.api.dto.GrupoDTOs.GrupoRequestDTO;
+import com.migopan.api.dto.GrupoDTOs.GrupoResponseDTO;
 import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
 import com.migopan.api.model.GrupoMembro;
 import com.migopan.api.model.Usuario;
+import com.migopan.api.model.enums.PapelGrupo;
 import com.migopan.api.model.keys.GrupoMembroId;
+import com.migopan.api.repository.ContagemPorGrupo;
 import com.migopan.api.repository.GrupoMembroRepository;
-import com.migopan.api.repository.TarefaRepository;
 import com.migopan.api.repository.GrupoRepository;
+import com.migopan.api.repository.TarefaRepository;
 import com.migopan.api.repository.UsuarioRepository;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GrupoService {
-    
-    @Autowired
-    private GrupoRepository grupoRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final GrupoRepository grupoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final GrupoMembroRepository grupoMembroRepository;
+    private final TarefaRepository tarefaRepository;
 
-    @Autowired
-    private GrupoMembroRepository grupoMembroRepository;
+    public List<GrupoResponseDTO> listarDoUsuario(Long usuarioId) {
+        return montarRespostas(grupoMembroRepository.findGruposByUsuarioId(usuarioId));
+    }
 
-    @Autowired 
-    private TarefaRepository tarefaRepository; 
-
-    public List<GrupoResponseDTO> getGruposDoUsuario(Long usuarioId) {
-        if (!usuarioRepository.existsById(usuarioId)) {
-            throw new NotFoundException("Usuário não encontrado.");
+    public GrupoResponseDTO buscarPorId(Long grupoId, Usuario usuarioLogado) {
+        Grupo grupo = buscar(grupoId);
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndBloqueadoFalse(grupoId, usuarioLogado.getId())) {
+            throw new AcessoNegadoException("Você não tem acesso a este grupo.");
         }
-
-        List<Grupo> grupos = grupoMembroRepository.findGruposByUsuarioId(usuarioId);
-        return grupos.stream().map(grupo -> {
-            long qtd = grupoMembroRepository.countByGrupoId(grupo.getId());
-            long atv = tarefaRepository.countByGrupoId(grupo.getId());
-            return new GrupoResponseDTO(grupo, qtd, atv);
-        }).toList();
+        return montarRespostas(List.of(grupo)).get(0);
     }
 
     @Transactional
     public GrupoResponseDTO criarGrupo(GrupoRequestDTO dto, Usuario usuarioLogado) {
-        Usuario usuario = usuarioRepository.findById(usuarioLogado.getId())
-                .orElseThrow(() -> new NotFoundException("Usuário criador não encontrado."));
-
         Grupo grupo = new Grupo();
-        grupo.setNome(dto.nome());
+        grupo.setNome(dto.nome().trim());
         grupo.setDescricao(dto.descricao());
-        
         grupo.setNivel(1);
         grupo.setSequenciaDias(0);
+        Grupo salvo = grupoRepository.save(grupo);
 
-        Grupo grupoSalvo = grupoRepository.save(grupo);
-
-        GrupoMembroId id = new GrupoMembroId(grupoSalvo.getId(), usuarioLogado.getId());
         GrupoMembro membro = new GrupoMembro();
-        membro.setId(id);
-        membro.setGrupo(grupoSalvo);
-        membro.setUsuario(usuario);
-        membro.setPapel("ADMIN");
+        membro.setId(new GrupoMembroId(salvo.getId(), usuarioLogado.getId()));
+        membro.setGrupo(salvo);
+        membro.setUsuario(usuarioRepository.getReferenceById(usuarioLogado.getId()));
+        membro.setPapel(PapelGrupo.ADMIN);
         membro.setBloqueado(false);
-
         grupoMembroRepository.save(membro);
 
-        return new GrupoResponseDTO(grupoSalvo, 1L, 0L);
+        return new GrupoResponseDTO(salvo, 1, 0);
     }
 
     @Transactional
     public GrupoResponseDTO atualizarGrupo(Long grupoId, Usuario usuarioLogado, AtualizarGrupoRequestDTO dto) {
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
-            throw new AcessoNegadoException("Apenas administradores podem editar o grupo.");
-        }
+        Grupo grupo = buscar(grupoId);
+        exigirAdmin(grupoId, usuarioLogado, "Apenas administradores podem editar o grupo.");
 
-        if (dto.nome() == null || dto.nome().isBlank() && dto.descricao() == null) {
+        boolean temNome = dto.nome() != null && !dto.nome().isBlank();
+        if (!temNome && dto.descricao() == null) {
             throw new IllegalArgumentException("Nenhum dado foi fornecido para atualização.");
         }
 
-        Grupo grupo = grupoRepository.findById(grupoId)
-                .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
-
-        if (dto.nome() != null && !dto.nome().isBlank()) { 
-            grupo.setNome(dto.nome());
+        if (temNome) {
+            grupo.setNome(dto.nome().trim());
         }
-        if (dto.descricao() != null) { 
+        if (dto.descricao() != null) {
             grupo.setDescricao(dto.descricao());
         }
 
-        Grupo salvo = grupoRepository.save(grupo);
-        long qtd = grupoMembroRepository.countByGrupoId(salvo.getId());
-        long atv = tarefaRepository.countByGrupoId(salvo.getId());
-        return new GrupoResponseDTO(salvo, qtd, atv);
+        return montarRespostas(List.of(grupoRepository.save(grupo))).get(0);
     }
 
     @Transactional
     public void deletarGrupo(Long grupoId, Usuario usuarioLogado) {
-        if (!grupoRepository.existsById(grupoId)) {
-            throw new NotFoundException("Grupo não encontrado.");
-        }
-
-        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapel(grupoId, usuarioLogado.getId(), "ADMIN")) {
-            throw new AcessoNegadoException("Apenas administradores podem deletar o grupo.");
-        }
-
+        buscar(grupoId);
+        exigirAdmin(grupoId, usuarioLogado, "Apenas administradores podem deletar o grupo.");
         grupoRepository.deleteById(grupoId);
     }
 
-    public List<GrupoResponseDTO> listarTodos() {
+    // ---------- apoio ----------
 
-        return grupoRepository.findAll().stream()
-                .map(grupo -> { 
-                    long qtd = grupoMembroRepository.countByGrupoId(grupo.getId());
-                    long atv = tarefaRepository.countByGrupoId(grupo.getId());
-                    return new GrupoResponseDTO(grupo, qtd, atv);
-                }).toList();
+    private Grupo buscar(Long id) {
+        return grupoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
     }
 
-    public GrupoResponseDTO grupoPorId(Long id) {
-        Grupo grupo = grupoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
-        
-        long qtd = grupoMembroRepository.countByGrupoId(id);
-        long atv = tarefaRepository.countByGrupoId(grupo.getId());
-        return new GrupoResponseDTO(grupo, qtd, atv);
+    private void exigirAdmin(Long grupoId, Usuario usuario, String mensagem) {
+        if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndPapelAndBloqueadoFalse(
+                grupoId, usuario.getId(), PapelGrupo.ADMIN)) {
+            throw new AcessoNegadoException(mensagem);
+        }
+    }
+
+    private List<GrupoResponseDTO> montarRespostas(List<Grupo> grupos) {
+        if (grupos.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = grupos.stream().map(Grupo::getId).toList();
+        Map<Long, Long> membros = paraMapa(grupoMembroRepository.contarMembrosPorGrupo(ids));
+        Map<Long, Long> atividades = paraMapa(tarefaRepository.contarPorGrupo(ids));
+
+        return grupos.stream()
+                .map(g -> new GrupoResponseDTO(g,
+                        membros.getOrDefault(g.getId(), 0L),
+                        atividades.getOrDefault(g.getId(), 0L)))
+                .toList();
+    }
+
+    private Map<Long, Long> paraMapa(List<ContagemPorGrupo> contagens) {
+        return contagens.stream()
+                .collect(Collectors.toMap(ContagemPorGrupo::getGrupoId, ContagemPorGrupo::getTotal, (a, b) -> a));
     }
 }

@@ -3,20 +3,20 @@ package com.migopan.api.security;
 import java.io.IOException;
 import java.util.Collections;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.migopan.api.repository.UsuarioRepository;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.migopan.api.model.Usuario;
-import com.migopan.api.repository.UsuarioRepository;
-
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
 
@@ -26,55 +26,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // 1. Libera requisições OPTIONS (Preflight CORS)
         if ("OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
-
-        // 2. Libera rotas públicas para não passar pela validação de JWT
-        if ("POST".equalsIgnoreCase(method) && 
-           (path.equals("/api/usuarios/criar") || path.equals("/api/usuarios"))) {
+        if ("POST".equalsIgnoreCase(method) && path.equals("/api/usuarios")) {
             return true;
         }
-
-        if (path.startsWith("/api/auth/")) {
-            return true;
-        }
-
-        return false;
+        return path.startsWith("/api/auth/");
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-        throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
 
-        // Pegar o token do cookie 
-        String token = null;
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("token".equals(cookie.getName())) {
-                    token = cookie.getValue();
-                    break;
-                }
-            }
-        }
+        String token = extrairToken(request);
 
-        // Pegar o usuário do token 
         if (token != null && jwtService.validarToken(token)) {
-            String email = jwtService.extrairEmail(token);
-            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+            usuarioRepository.findByEmail(jwtService.extrairEmail(token))
+                    .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+                    .ifPresent(usuario -> SecurityContextHolder.getContext().setAuthentication(
+                            new UsernamePasswordAuthenticationToken(usuario, null, Collections.emptyList())));
+        }
 
-            if (usuario != null) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        usuario, null, Collections.emptyList());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+        chain.doFilter(request, response);
+    }
+
+    private String extrairToken(HttpServletRequest request) {
+        if (request.getCookies() == null) {
+            return null;
+        }
+        for (Cookie cookie : request.getCookies()) {
+            if ("token".equals(cookie.getName())) {
+                return cookie.getValue();
             }
         }
-        
-        filterChain.doFilter(request, response);
+        return null;
     }
 }

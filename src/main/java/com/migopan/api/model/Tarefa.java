@@ -4,8 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.migopan.api.model.enums.Repeticao;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,7 +27,7 @@ import lombok.Setter;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Tarefa {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,23 +47,23 @@ public class Tarefa {
 
     @Column(nullable = false, length = 150)
     private String titulo;
-    
+
     @Column(columnDefinition = "TEXT")
     private String descricao;
-    
-    // Novos campos adicionados
+
     @Column(length = 50)
     private String categoria;
 
-    @Column(name = "cor", length = 20)
+    @Column(length = 20)
     private String cor;
 
     @Column(nullable = false)
-    private Boolean prioridade = false; // Marcar como prioridade (estrela)
+    private Boolean prioridade = false;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String repeticao = "NENHUMA";
-    
+    private Repeticao repeticao = Repeticao.NENHUMA;
+
     @Column(name = "data_limite")
     private LocalDate dataLimite;
 
@@ -68,13 +72,13 @@ public class Tarefa {
 
     @Column(name = "horario_resolucao")
     private LocalTime horarioResolucao;
-    
+
     @Column(name = "data_criacao", nullable = false, updatable = false)
     private LocalDateTime dataCriacao = LocalDateTime.now();
-    
+
     @Column(name = "data_resolucao")
     private LocalDateTime dataResolucao;
-    
+
     @Column(nullable = false)
     private Boolean concluida = false;
 }

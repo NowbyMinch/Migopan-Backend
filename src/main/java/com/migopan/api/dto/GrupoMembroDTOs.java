@@ -1,43 +1,38 @@
 package com.migopan.api.dto;
 
-import com.migopan.api.model.GrupoMembro;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 
-public class GrupoMembroDTOs {
+import com.migopan.api.model.GrupoMembro;
+import com.migopan.api.model.enums.PapelGrupo;
 
-    public record AtualizarMembroRequestDTO(
-        @Pattern(regexp = "ADMIN|MEMBRO", message = "O papel deve ser 'ADMIN' ou 'MEMBRO'")
-        String papel,
-        
-        Boolean bloqueado
-    ) {}
+import jakarta.validation.constraints.NotNull;
+
+public final class GrupoMembroDTOs {
+
+    private GrupoMembroDTOs() {
+    }
 
     public record GrupoMembroRequestDTO(
-        @NotNull(message = "O ID do usuário não pode ser nulo")
-        Long usuarioId,
+            @NotNull(message = "O ID do usuário não pode ser nulo")
+            Long usuarioId,
 
-        String papel
-    ) {}
+            PapelGrupo papel) {
+    }
+
+    public record AtualizarMembroRequestDTO(PapelGrupo papel, Boolean bloqueado) {
+    }
 
     public record GrupoMembroResponseDTO(
-        Long usuarioId,
-        String nomeUsuario,
-        String emailUsuario,
-        String papel,
-        boolean bloqueado,
-        LocalDateTime dataEntrada
-    ) {
-        public GrupoMembroResponseDTO(GrupoMembro membro) {
-            this(
-                membro.getUsuario().getId(),
-                membro.getUsuario().getNome(),
-                membro.getUsuario().getEmail(),
-                membro.getPapel(),
-                membro.getBloqueado(),
-                membro.getDataEntrada()
-            );
+            Long usuarioId,
+            String nomeUsuario,
+            String emailUsuario,
+            PapelGrupo papel,
+            boolean bloqueado,
+            LocalDateTime dataEntrada) {
+
+        public GrupoMembroResponseDTO(GrupoMembro m) {
+            this(m.getUsuario().getId(), m.getUsuario().getNome(), m.getUsuario().getEmail(),
+                    m.getPapel(), m.getBloqueado(), m.getDataEntrada());
         }
     }
 }
