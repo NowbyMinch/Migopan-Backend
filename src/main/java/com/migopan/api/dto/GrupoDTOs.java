@@ -3,6 +3,7 @@ package com.migopan.api.dto;
 import java.time.LocalDateTime;
 
 import com.migopan.api.model.Grupo;
+import com.migopan.api.model.enums.PapelGrupo;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -35,14 +36,16 @@ public final class GrupoDTOs {
             Long quantidadeAtividades,
             Integer nivel,
             Integer sequenciaDias,
-            LocalDateTime dataCriacao) {
+            LocalDateTime dataCriacao,
+            PapelGrupo meuPapel) { 
 
-        public GrupoResponseDTO(Grupo g, long quantidadeMembros, long quantidadeAtividades) {
+        public GrupoResponseDTO(Grupo g, long quantidadeMembros, long quantidadeAtividades, PapelGrupo meuPapel) {
             this(g.getId(), g.getNome(), g.getDescricao(),
                     quantidadeMembros, quantidadeAtividades,
                     g.getNivel() != null ? g.getNivel() : 1,
                     g.getSequenciaDias() != null ? g.getSequenciaDias() : 0,
-                    g.getDataCriacao());
+                    g.getDataCriacao(),
+                    meuPapel);
         }
     }
 }

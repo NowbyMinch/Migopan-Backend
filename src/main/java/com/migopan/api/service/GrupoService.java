@@ -21,6 +21,7 @@ import com.migopan.api.model.keys.GrupoMembroId;
 import com.migopan.api.repository.ContagemPorGrupo;
 import com.migopan.api.repository.GrupoMembroRepository;
 import com.migopan.api.repository.GrupoRepository;
+import com.migopan.api.repository.PapelNoGrupo;
 import com.migopan.api.repository.TarefaRepository;
 import com.migopan.api.repository.UsuarioRepository;
 
@@ -37,7 +38,7 @@ public class GrupoService {
     private final TarefaRepository tarefaRepository;
 
     public List<GrupoResponseDTO> listarDoUsuario(Long usuarioId) {
-        return montarRespostas(grupoMembroRepository.findGruposByUsuarioId(usuarioId));
+        return montarRespostas(grupoMembroRepository.findGruposByUsuarioId(usuarioId), usuarioId);
     }
 
     public GrupoResponseDTO buscarPorId(Long grupoId, Usuario usuarioLogado) {
@@ -45,7 +46,7 @@ public class GrupoService {
         if (!grupoMembroRepository.existsByGrupoIdAndUsuarioIdAndBloqueadoFalse(grupoId, usuarioLogado.getId())) {
             throw new AcessoNegadoException("Você não tem acesso a este grupo.");
         }
-        return montarRespostas(List.of(grupo)).get(0);
+        return montarRespostas(List.of(grupo), usuarioLogado.getId()).get(0);
     }
 
     @Transactional
@@ -65,7 +66,7 @@ public class GrupoService {
         membro.setBloqueado(false);
         grupoMembroRepository.save(membro);
 
-        return new GrupoResponseDTO(salvo, 1, 0);
+        return new GrupoResponseDTO(salvo, 1, 0, PapelGrupo.ADMIN);
     }
 
     @Transactional
@@ -85,7 +86,7 @@ public class GrupoService {
             grupo.setDescricao(dto.descricao());
         }
 
-        return montarRespostas(List.of(grupoRepository.save(grupo))).get(0);
+        return montarRespostas(List.of(grupoRepository.save(grupo)), usuarioLogado.getId()).get(0);
     }
 
     @Transactional
@@ -109,18 +110,22 @@ public class GrupoService {
         }
     }
 
-    private List<GrupoResponseDTO> montarRespostas(List<Grupo> grupos) {
+    /** Monta os DTOs com 3 queries (membros, atividades e papel), não importa quantos grupos. */
+    private List<GrupoResponseDTO> montarRespostas(List<Grupo> grupos, Long usuarioId) {
         if (grupos.isEmpty()) {
             return List.of();
         }
         List<Long> ids = grupos.stream().map(Grupo::getId).toList();
         Map<Long, Long> membros = paraMapa(grupoMembroRepository.contarMembrosPorGrupo(ids));
         Map<Long, Long> atividades = paraMapa(tarefaRepository.contarPorGrupo(ids));
+        Map<Long, PapelGrupo> papeis = grupoMembroRepository.findPapeisDoUsuario(usuarioId, ids).stream()
+                .collect(Collectors.toMap(PapelNoGrupo::getGrupoId, PapelNoGrupo::getPapel, (a, b) -> a));
 
         return grupos.stream()
                 .map(g -> new GrupoResponseDTO(g,
                         membros.getOrDefault(g.getId(), 0L),
-                        atividades.getOrDefault(g.getId(), 0L)))
+                        atividades.getOrDefault(g.getId(), 0L),
+                        papeis.get(g.getId())))
                 .toList();
     }
 

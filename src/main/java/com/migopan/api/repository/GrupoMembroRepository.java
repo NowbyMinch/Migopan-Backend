@@ -27,6 +27,13 @@ public interface GrupoMembroRepository extends JpaRepository<GrupoMembro, GrupoM
     List<Grupo> findGruposByUsuarioId(@Param("usuarioId") Long usuarioId);
 
     @Query("""
+            SELECT gm.grupo.id AS grupoId, gm.papel AS papel
+            FROM GrupoMembro gm
+            WHERE gm.usuario.id = :usuarioId AND gm.grupo.id IN :ids
+            """)
+    List<PapelNoGrupo> findPapeisDoUsuario(@Param("usuarioId") Long usuarioId, @Param("ids") Collection<Long> ids);
+
+    @Query("""
             SELECT gm.grupo.id AS grupoId, COUNT(gm) AS total
             FROM GrupoMembro gm
             WHERE gm.grupo.id IN :ids
