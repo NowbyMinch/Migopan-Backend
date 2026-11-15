@@ -1,8 +1,8 @@
 package com.migopan.api.repository;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,4 +26,18 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
             GROUP BY t.grupo.id
             """)
     List<ContagemPorGrupo> contarPorGrupo(@Param("ids") Collection<Long> ids);
+
+    @Query("""
+            SELECT DISTINCT t.dataConclusao FROM Tarefa t
+            WHERE t.concluidaPor.id = :usuarioId AND t.concluida = true AND t.dataConclusao IS NOT NULL
+            ORDER BY t.dataConclusao DESC
+            """)
+    List<LocalDate> diasComConclusaoDoUsuario(@Param("usuarioId") Long usuarioId);
+
+    @Query("""
+            SELECT DISTINCT t.dataConclusao FROM Tarefa t
+            WHERE t.grupo.id = :grupoId AND t.concluida = true AND t.dataConclusao IS NOT NULL
+            ORDER BY t.dataConclusao DESC
+            """)
+    List<LocalDate> diasComConclusaoDoGrupo(@Param("grupoId") Long grupoId);
 }

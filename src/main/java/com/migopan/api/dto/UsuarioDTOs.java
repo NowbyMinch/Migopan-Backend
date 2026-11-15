@@ -53,7 +53,7 @@ public final class UsuarioDTOs {
             BigDecimal dinheiro) {
         public UsuarioResponseDTO(Usuario u) {
             this(u.getId(), u.getNome(), u.getEmail(), u.getEmailVerificado(),
-                    u.getAtivo(), u.getSequenciaDias(), u.getDinheiro());
+                    u.getAtivo(), u.sequenciaEfetiva(), u.getDinheiro());
         }
     }
 }

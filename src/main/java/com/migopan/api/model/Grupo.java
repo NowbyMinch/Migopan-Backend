@@ -2,7 +2,12 @@ package com.migopan.api.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.migopan.api.util.SequenciaDias;
+import com.migopan.api.util.Tempo;
 
 @Entity
 @Table(name = "grupo")
@@ -12,7 +17,7 @@ public class Grupo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Mudado para Long para padronizar com as outras entidades
+    private Long id; 
 
     @Column(nullable = false, length = 100)
     private String nome;
@@ -21,14 +26,21 @@ public class Grupo {
     private String descricao;
     
     @Column(nullable = false)
-    private Integer nivel = 1; // Nível do grupo
+    private Integer nivel = 1;
 
     @Column(name = "sequencia_dias", nullable = false)
-    private Integer sequenciaDias = 0; // Dias consecutivos de tarefas feitas no grupo
+    private Integer sequenciaDias = 0;
+
+    @Column(name = "ultima_atividade")
+    private LocalDate ultimaAtividade;
 
     @Column(nullable = false)
     private Boolean ativo = true;
     
     @Column(name = "data_criacao", updatable = false)
     private LocalDateTime dataCriacao = LocalDateTime.now();
+    
+    public int sequenciaEfetiva() {
+        return SequenciaDias.efetiva(sequenciaDias, ultimaAtividade, Tempo.hoje());
+    }
 }

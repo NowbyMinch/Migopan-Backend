@@ -1,7 +1,11 @@
 package com.migopan.api.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.migopan.api.util.SequenciaDias;
+import com.migopan.api.util.Tempo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,9 +20,9 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "usuario")
-@Getter @Setter 
+@Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class Usuario{
+public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,14 +42,19 @@ public class Usuario{
     @Column(name = "sequencia_dias", nullable = false)
     private Integer sequenciaDias = 0;
 
+    @Column(name = "ultima_atividade")
+    private LocalDate ultimaAtividade;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal dinheiro = BigDecimal.ZERO;
 
     @Column(nullable = false, name = "data_criacao", updatable = false)
     private LocalDateTime dataCriacao = LocalDateTime.now();
-     
+
     @Column(nullable = false)
     private Boolean ativo = true;
+
+    public int sequenciaEfetiva() {
+        return SequenciaDias.efetiva(sequenciaDias, ultimaAtividade, Tempo.hoje());
+    }
 }
-
-

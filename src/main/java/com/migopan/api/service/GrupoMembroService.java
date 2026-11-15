@@ -96,7 +96,7 @@ public class GrupoMembroService {
         grupoMembroRepository.delete(membro);
     }
 
-    // ---------- apoio ----------
+    // Apoio
 
     private GrupoMembro buscarMembro(Long grupoId, Long usuarioId) {
         return grupoMembroRepository.findById(new GrupoMembroId(grupoId, usuarioId))

@@ -36,7 +36,6 @@ public class Tarefa {
     @JoinColumn(name = "usuario_criador_id", nullable = false)
     private Usuario usuarioCriador;
 
-    // Preenchido quando a tarefa é PESSOAL. Nulo quando é de grupo.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_atribuido_id")
     private Usuario usuarioAtribuido;
@@ -81,4 +80,11 @@ public class Tarefa {
 
     @Column(nullable = false)
     private Boolean concluida = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "concluida_por_id")
+    private Usuario concluidaPor;
+
+    @Column(name = "data_conclusao")
+    private LocalDate dataConclusao;
 }

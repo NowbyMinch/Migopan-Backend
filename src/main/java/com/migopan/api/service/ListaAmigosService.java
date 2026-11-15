@@ -46,12 +46,10 @@ public class ListaAmigosService {
         Usuario amigo = usuarioRepository.findById(amigoId)
                 .orElseThrow(() -> new NotFoundException("Amigo não encontrado."));
 
-        // Confere os DOIS sentidos: se o outro já me enviou, não cria uma segunda linha
         List<ListaAmigos> existentes = listaAmigosRepository.findRelacaoEntre(usuarioId, amigoId);
         if (existentes.stream().anyMatch(r -> r.getStatusAmizade() != StatusAmizade.RECUSADA)) {
             throw new IllegalArgumentException("Já existe uma solicitação ou amizade entre estes usuários.");
         }
-        // Solicitação recusada antes? Limpa e permite tentar de novo
         if (!existentes.isEmpty()) {
             listaAmigosRepository.deleteAll(existentes);
             listaAmigosRepository.flush();

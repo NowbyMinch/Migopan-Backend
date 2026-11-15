@@ -33,7 +33,6 @@
         overflow: hidden;
       }
 
-      /* SIDEBAR / CONFIGURAÇÕES E AUTH */
       aside {
         width: 320px;
         background: #fff;
@@ -134,7 +133,6 @@
         background: #cf513d;
       }
 
-      /* CONTEÚDO PRINCIPAL / BOARD KANBAN */
       main {
         flex: 1;
         display: flex;
@@ -215,7 +213,6 @@
         margin-bottom: 8px;
       }
 
-      /* LOGS */
       .console-wrapper {
         height: 140px;
         background: #1e1d1a;
@@ -394,7 +391,6 @@
         const el = document.getElementById("log");
         const hora = new Date().toLocaleTimeString();
 
-        // Extrai apenas a mensagem amigável caso seja o JSON de erro padrão do Spring
         let corpoExibicao = dados;
         if (dados && typeof dados === "object" && dados.message) {
           corpoExibicao = dados.message;

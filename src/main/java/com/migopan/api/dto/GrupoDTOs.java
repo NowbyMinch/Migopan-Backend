@@ -43,7 +43,7 @@ public final class GrupoDTOs {
             this(g.getId(), g.getNome(), g.getDescricao(),
                     quantidadeMembros, quantidadeAtividades,
                     g.getNivel() != null ? g.getNivel() : 1,
-                    g.getSequenciaDias() != null ? g.getSequenciaDias() : 0,
+                    g.sequenciaEfetiva(),
                     g.getDataCriacao(),
                     meuPapel);
         }

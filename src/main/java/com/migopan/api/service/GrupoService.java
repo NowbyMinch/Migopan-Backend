@@ -96,8 +96,7 @@ public class GrupoService {
         grupoRepository.deleteById(grupoId);
     }
 
-    // ---------- apoio ----------
-
+    // Apoio
     private Grupo buscar(Long id) {
         return grupoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Grupo não encontrado."));
@@ -110,7 +109,6 @@ public class GrupoService {
         }
     }
 
-    /** Monta os DTOs com 3 queries (membros, atividades e papel), não importa quantos grupos. */
     private List<GrupoResponseDTO> montarRespostas(List<Grupo> grupos, Long usuarioId) {
         if (grupos.isEmpty()) {
             return List.of();

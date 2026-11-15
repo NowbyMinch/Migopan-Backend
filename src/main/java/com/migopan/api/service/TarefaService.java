@@ -1,7 +1,6 @@
 package com.migopan.api.service;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -19,6 +18,8 @@ import com.migopan.api.model.enums.Repeticao;
 import com.migopan.api.repository.GrupoMembroRepository;
 import com.migopan.api.repository.GrupoRepository;
 import com.migopan.api.repository.TarefaRepository;
+import com.migopan.api.repository.UsuarioRepository;
+import com.migopan.api.util.Tempo;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +31,8 @@ public class TarefaService {
     private final TarefaRepository tarefaRepository;
     private final GrupoRepository grupoRepository;
     private final GrupoMembroRepository grupoMembroRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final SequenciaService sequenciaService;
 
     @Transactional
     public TarefaResponseDTO criarTarefa(Usuario usuarioLogado, CriarTarefaRequestDTO dto) {
@@ -84,12 +87,29 @@ public class TarefaService {
     public TarefaResponseDTO alterarConclusao(Long tarefaId, Usuario usuarioLogado) {
         Tarefa tarefa = buscarComAcesso(tarefaId, usuarioLogado);
 
-        boolean novoStatus = !Boolean.TRUE.equals(tarefa.getConcluida());
-        tarefa.setConcluida(novoStatus); 
-        tarefa.setDataResolucao(novoStatus ? LocalDateTime.now() : null);
-        tarefa.setHorarioResolucao(novoStatus ? LocalTime.now() : null);
+        Usuario quemConcluiuAntes = tarefa.getConcluidaPor();
 
-        return new TarefaResponseDTO(tarefaRepository.save(tarefa));
+        boolean novoStatus = !Boolean.TRUE.equals(tarefa.getConcluida());
+        LocalDateTime agora = Tempo.agora();
+
+        tarefa.setConcluida(novoStatus);
+        tarefa.setDataResolucao(novoStatus ? agora : null);
+        tarefa.setHorarioResolucao(novoStatus ? agora.toLocalTime() : null);
+        tarefa.setDataConclusao(novoStatus ? agora.toLocalDate() : null);
+        tarefa.setConcluidaPor(novoStatus ? usuarioRepository.getReferenceById(usuarioLogado.getId()) : null);
+
+        tarefaRepository.saveAndFlush(tarefa);
+
+        Long donoDoCredito = novoStatus || quemConcluiuAntes == null
+                ? usuarioLogado.getId()
+                : quemConcluiuAntes.getId();
+
+        sequenciaService.recalcularUsuario(donoDoCredito);
+        if (tarefa.getGrupo() != null) {
+            sequenciaService.recalcularGrupo(tarefa.getGrupo().getId());
+        }
+
+        return new TarefaResponseDTO(tarefa);
     }
 
     @Transactional
@@ -129,7 +149,7 @@ public class TarefaService {
         tarefaRepository.delete(buscarComAcesso(tarefaId, usuarioLogado));
     }
 
-    // ---------- apoio ----------
+    // apoio 
 
     private Tarefa buscarComAcesso(Long tarefaId, Usuario usuario) {
         Tarefa tarefa = tarefaRepository.findById(tarefaId)
