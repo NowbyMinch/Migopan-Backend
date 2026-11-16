@@ -2,12 +2,14 @@ package com.migopan.api.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.migopan.api.dto.GrupoMembroDTOs.AtualizarMembroRequestDTO;
 import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroRequestDTO;
 import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroResponseDTO;
+import com.migopan.api.dto.UsuarioDTOs.PerfilResponseDTO;
 import com.migopan.api.exception.AcessoNegadoException;
 import com.migopan.api.exception.NotFoundException;
 import com.migopan.api.model.Grupo;
@@ -41,6 +43,23 @@ public class GrupoMembroService {
                 .map(GrupoMembroResponseDTO::new)
                 .toList();
     }
+
+    public List<PerfilResponseDTO> buscarCandidatos(Long grupoId, Usuario usuarioLogado, String nome) {
+        if (!grupoRepository.existsById(grupoId)) {
+            throw new NotFoundException("Grupo não encontrado.");
+        }
+        exigirAdmin(grupoId, usuarioLogado, "Apenas administradores podem adicionar membros.");
+
+        String termo = nome == null ? "" : nome.trim();
+        if (termo.length() < 2) {
+            return List.of();
+        }
+
+        return usuarioRepository.buscarCandidatosAoGrupo(termo, grupoId, PageRequest.of(0, 10)).stream()
+                .map(PerfilResponseDTO::new)
+                .toList();
+    }
+
 
     @Transactional
     public GrupoMembroResponseDTO adicionarMembro(Long grupoId, Usuario usuarioLogado, GrupoMembroRequestDTO dto) {

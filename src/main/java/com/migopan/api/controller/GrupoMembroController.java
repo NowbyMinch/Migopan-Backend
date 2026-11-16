@@ -17,11 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.migopan.api.dto.GrupoMembroDTOs.AtualizarMembroRequestDTO;
 import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroRequestDTO;
 import com.migopan.api.dto.GrupoMembroDTOs.GrupoMembroResponseDTO;
+import com.migopan.api.dto.UsuarioDTOs.PerfilResponseDTO;
 import com.migopan.api.model.Usuario;
 import com.migopan.api.service.GrupoMembroService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/grupos/{grupoId}/membros")
@@ -35,6 +38,14 @@ public class GrupoMembroController {
             @AuthenticationPrincipal Usuario usuarioLogado) {
         return grupoMembroService.listarMembros(grupoId, usuarioLogado);
     }
+
+    @GetMapping("/candidatos")
+    public List<PerfilResponseDTO> candidatos(@PathVariable Long grupoId,
+            @RequestParam String nome,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        return grupoMembroService.buscarCandidatos(grupoId, usuarioLogado, nome);
+    }
+
 
     @PostMapping
     public ResponseEntity<GrupoMembroResponseDTO> adicionar(@PathVariable Long grupoId,
